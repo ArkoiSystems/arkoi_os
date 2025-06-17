@@ -25,7 +25,13 @@ set(KERNEL_BIN ${CMAKE_PROJECT_NAME}.bin)
 set(KERNEL_ISO ${CMAKE_PROJECT_NAME}.iso)
 
 # Create the executable using the linker script
-add_executable(${KERNEL_BIN} src/boot.s src/kernel.c src/vga.c src/vga.h)
+add_executable(
+    ${KERNEL_BIN}
+    src/boot.s
+    src/kernel.c
+    src/vga.c src/vga.h
+    src/kstdio.c src/kstdio.h
+)
 set_target_properties(${KERNEL_BIN} PROPERTIES LINK_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker.ld -ffreestanding -O2 -nostdlib -lgcc")
 
 # Copy the output binary into the bin directory
