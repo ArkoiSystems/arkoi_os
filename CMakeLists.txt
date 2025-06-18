@@ -31,6 +31,7 @@ add_executable(
     src/kernel.c
     src/vga.c src/vga.h
     src/kstdio.c src/kstdio.h
+    src/kstring.c src/kstring.h
 )
 set_target_properties(${KERNEL_BIN} PROPERTIES LINK_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker.ld -ffreestanding -O2 -nostdlib -lgcc")
 
