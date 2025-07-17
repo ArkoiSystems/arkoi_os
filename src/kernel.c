@@ -1,7 +1,7 @@
-#include "kassert.h"
-#include "kstdio.h"
-#include "symbols.h"
-#include "vga.h"
+#include "drivers/vga.h"
+#include "lib/kassert.h"
+#include "lib/symbols.h"
+#include "lib/kstdio.h"
 
 void kernel_main(void) {
 	vga_initialize();

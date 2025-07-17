@@ -1,10 +1,11 @@
-#include "kstdio.h"
+#include "lib/kstdio.h"
 
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "kstring.h"
-#include "vga.h"
+#include "drivers/vga.h"
+#include "lib/kmemory.h"
+#include "lib/kstring.h"
 
 static const char *HEX_DIGITS = "0123456789ABCDEF";
 
@@ -15,7 +16,7 @@ static uint32_t write_buffer(char *buffer, const uint32_t size, const char *valu
     if (length >= size - 1) return 0;
 
     // Copy the message into the buffer.
-    memmove(buffer, value, length);
+    memcpy(buffer, value, length);
 
     return length;
 }
@@ -71,7 +72,7 @@ static uint32_t write_hex(char *buffer, const uint32_t size, const uint32_t valu
     return write_buffer(buffer, size, output, position);
 }
 
-uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, va_list args) {
+uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, const va_list args) {
     if (size == 0) return 0;
 
     // Ensures that there is always room for the amount of character to write and a null terminator.
@@ -80,7 +81,7 @@ uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, va_lis
     const uint32_t format_length = strlen(format);
     uint32_t position = 0;
 
-    for (int index = 0; index < format_length; index++) {
+    for (uint32_t index = 0; index < format_length; index++) {
         char current = format[index];
 
         // Encountering a non-format specifier will just print out the char.

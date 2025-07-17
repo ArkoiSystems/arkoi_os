@@ -1,4 +1,4 @@
-#include "vga.h"
+#include "drivers/vga.h"
 
 static uint16_t *VGA_MEMORY = (uint16_t *) VGA_MEMORY_ADDRESS;
 

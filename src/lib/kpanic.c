@@ -1,6 +1,6 @@
-#include "kpanic.h"
+#include "lib/kpanic.h"
 
-#include "kstdio.h"
+#include "lib/kstdio.h"
 
 void panic(const char *format, const char *file, const int line, const char *function, ...) {
     va_list args;
