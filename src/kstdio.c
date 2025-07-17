@@ -166,15 +166,21 @@ uint32_t snprintf(char *buffer, const uint32_t size, const char *format, ...) {
     return written;
 }
 
-uint32_t kprintf(const char *format, ...) {
+uint32_t kvprintf(const char *format, const va_list args) {
     static const uint32_t PRINTF_BUFFER_SIZE = 256;
     char buffer[PRINTF_BUFFER_SIZE];
 
+    const uint32_t written = vsnprintf(buffer, PRINTF_BUFFER_SIZE, format, args);
+    if (written != 0) vga_write(buffer);
+
+    return written;
+}
+
+uint32_t kprintf(const char *format, ...) {
     va_list args;
     va_start(args, format);
 
-    const uint32_t written = vsnprintf(buffer, PRINTF_BUFFER_SIZE, format, args);
-    if (written != 0) vga_write(buffer);
+    const uint32_t written = kvprintf(format, args);
 
     va_end(args);
     return written;

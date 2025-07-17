@@ -1,3 +1,4 @@
+#include "kassert.h"
 #include "kstdio.h"
 #include "vga.h"
 
@@ -8,4 +9,6 @@ void kernel_main(void) {
 	kprintf("This is VGA text mode, here is some %x to enjoy!\n", 0xDEADBEEF);
 	kprintf("Using %%c you can print out single characters%c\n", '!');
 	kprintf("All invalid formats just get printed out %42!\n");
+
+	ASSERT_M(42 != 42, "The cake is a lie");
 }
