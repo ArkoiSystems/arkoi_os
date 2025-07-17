@@ -2,9 +2,14 @@
 #include "lib/kassert.h"
 #include "lib/symbols.h"
 #include "lib/kstdio.h"
+#include "gdt/gdt.h"
 
 void kernel_main(void) {
 	vga_initialize();
+	kprintf("VGA initialized!\n");
+
+	gdt_initialize();
+	kprintf("GDT initialized!\n");
 
 	kprintf("%s from my %d-bit kernel!\n", "Hello World", 32);
 	kprintf("This is VGA text mode, here is some %x to enjoy!\n", 0xDEADBEEF);

@@ -31,6 +31,8 @@ add_executable(
     ${KERNEL_BIN}
     src/kernel.c
     src/boot.s
+    src/gdt/gdt.s
+    src/gdt/gdt.c
     src/lib/kstdio.c
     src/lib/kpanic.c
     src/lib/kstring.c
