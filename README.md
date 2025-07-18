@@ -16,6 +16,7 @@ Arkoi Operating System is an experimental, educational operating system project 
 This repository uses the following open source projects:
 - [OSDev-Clion](https://github.com/balsigergil/OSDev-Clion)
 - [OSDev Wiki](https://wiki.osdev.org/)
+- [OliveStem x86 OS - Playlist](https://www.youtube.com/playlist?list=PL2EF13wm-hWAglI8rRbdsCPq_wRpYvQQy)
 
 ---
 
