@@ -24,21 +24,19 @@ stack_top:
 .global _start
 .type _start, @function
 _start:
-	mov $stack_top, %esp
+    mov $stack_top, %esp
 
     # Call the global constructors
     call _init
 
     # Transfer the control to the main kernel
-	call kernel_main
+    call kernel_main
 
     # Hang if kernel_main unexpectedly returns
-	cli
-1:	hlt
+    cli
+1:  hlt
 	jmp 1b
 
-/*
-Set the size of the _start symbol to the current location '.' minus its start.
-This is useful when debugging or when you implement call tracing.
-*/
+# Set the size of the _start symbol to the current location '.' minus its start.
+# This is useful when debugging or when you implement call tracing.
 .size _start, . - _start

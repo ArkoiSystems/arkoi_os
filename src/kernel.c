@@ -32,5 +32,6 @@ void kernel_main(void) {
 
 	ASSERT_M(42 != 42, "The cake is a lie");
 
-	__asm__ volatile (".byte 0x0F, 0x0B"); // UD2 - guaranteed invalid
+	// ReSharper disable once CppDFAEndlessLoop
+	while (1);
 }

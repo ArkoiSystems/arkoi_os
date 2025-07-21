@@ -2,6 +2,7 @@
 
 #include "lib/kstdio.h"
 #include "gdt/gdt.h"
+#include "idt/pic.h"
 
 #define IDT_ENTRIES_AMOUNT 256
 
@@ -12,6 +13,8 @@ extern void* isr_stub_table[];
 
 void idt_initialize() {
     idt_ptr = idt_create_ptr(IDT_ENTRIES_AMOUNT, (uint32_t) &idt_entries);
+
+    pic_remap(0x20, 0x28);
 
     for (uint8_t vector = 0; vector < 32; vector++) {
         idt_entries[vector] = idt_create_entry((uint32_t) isr_stub_table[vector], 0x8E);
@@ -62,12 +65,10 @@ void isr_handler(isr_frame_t *frame) {
     }
 
     kprintf("Interrupt: %d (%s)\n", frame->int_no, message);
-
     if (frame->int_no == 14) {
         kprintf("Page fault at address: %x\n", frame->cr2);
     }
 
-    // ReSharper disable once CppDFAEndlessLoop
     while (1) {
         __asm__ volatile("cli; hlt");
     }

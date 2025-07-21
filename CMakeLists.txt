@@ -34,10 +34,12 @@ add_executable(
     src/gdt/gdt.c
     src/idt/idt.s
     src/idt/idt.c
+    src/idt/pic.c
     src/lib/kstdio.c
     src/lib/kpanic.c
     src/lib/kstring.c
     src/lib/kmemory.c
+    src/lib/kio.c
     src/drivers/vga.c
     src/boot/crtn.s
     src/boot/crti.s
