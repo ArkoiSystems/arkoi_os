@@ -3,6 +3,14 @@
 
 #include <stdint.h>
 
+#define GDT_TO_SELECTOR_INDEX(index) (index << 3)
+#define GDT_NULL_SELECTOR            GDT_TO_SELECTOR_INDEX(0)
+#define GDT_KERNEL_CODE_SELECTOR     GDT_TO_SELECTOR_INDEX(1)
+#define GDT_KERNEL_DATA_SELECTOR     GDT_TO_SELECTOR_INDEX(2)
+#define GDT_USER_CODE_SELECTOR       GDT_TO_SELECTOR_INDEX(3)
+#define GDT_USER_DATA_SELECTOR       GDT_TO_SELECTOR_INDEX(4)
+#define GDT_SEGMENTS                 5
+
 #define GDT_GRAN_1B                 (0 << 15) // Sets the granularity to be in 1 Byte blocks
 #define GDT_GRAN_4KB                (1 << 15) // Sets the granularity to be in 4KiB blocks
 #define GDT_GRAN_16BIT              (0 << 14) // Sets the segment to be 16-bit protected
@@ -24,6 +32,8 @@
 #define GDT_CODE_RING3 (GDT_ACCESS_PRESENT | GDT_ACCESS_PRIVILEGE(3) | GDT_ACCESS_CODE_DATA | GDT_ACCESS_CODE | GDT_ACCESS_READ)
 #define GDT_DATA_RING3 (GDT_ACCESS_PRESENT | GDT_ACCESS_PRIVILEGE(3) | GDT_ACCESS_CODE_DATA | GDT_ACCESS_DATA | GDT_ACCESS_WRITE)
 
+void gdt_initialize();
+
 typedef struct {
     uint16_t segment_limit;
     uint16_t base_low;
@@ -40,7 +50,7 @@ typedef struct {
     uint32_t base;
 } __attribute__((packed)) gdt_ptr_t;
 
-void gdt_initialize();
+gdt_ptr_t gdt_create_ptr(uint16_t segments, uint32_t base);
 
 extern void gdt_load(gdt_ptr_t *gdt_ptr);
 

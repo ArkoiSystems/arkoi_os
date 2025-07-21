@@ -32,12 +32,16 @@ add_executable(
     src/kernel.c
     src/gdt/gdt.s
     src/gdt/gdt.c
+    src/idt/idt.s
+    src/idt/idt.c
     src/lib/kstdio.c
     src/lib/kpanic.c
     src/lib/kstring.c
     src/lib/kmemory.c
     src/drivers/vga.c
-    src/boot.s
+    src/boot/crtn.s
+    src/boot/crti.s
+    src/boot/boot.s
 )
 set_target_properties(${KERNEL_BIN} PROPERTIES LINK_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker.ld -ffreestanding -O2 -nostdlib -lgcc")
 
