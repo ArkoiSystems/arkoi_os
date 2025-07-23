@@ -1,8 +1,10 @@
+#include "drivers/keyboard.h"
+#include "drivers/pit.h"
 #include "drivers/vga.h"
-#include "lib/kassert.h"
 #include "lib/symbols.h"
 #include "lib/kstdio.h"
 #include "gdt/gdt.h"
+#include "idt/idt.h"
 
 void kernel_main(void) {
 	vga_initialize();
@@ -10,6 +12,17 @@ void kernel_main(void) {
 
 	gdt_initialize();
 	kprintf("GDT initialized!\n");
+
+	idt_initialize();
+	kprintf("IDT initialized!\n");
+
+	pit_initialize();
+	kprintf("PIT initialized!\n");
+
+	keyboard_initialize();
+	kprintf("Keyboard initialized!\n");
+
+	kprintf("\n");
 
 	kprintf("%s from my %d-bit kernel!\n", "Hello World", 32);
 	kprintf("This is VGA text mode, here is some %x to enjoy!\n", 0xDEADBEEF);
@@ -26,5 +39,6 @@ void kernel_main(void) {
 
 	kprintf("\n");
 
-	ASSERT_M(42 != 42, "The cake is a lie");
+	// ReSharper disable once CppDFAEndlessLoop
+	while (1);
 }
