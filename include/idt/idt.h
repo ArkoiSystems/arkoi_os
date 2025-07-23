@@ -22,7 +22,21 @@ typedef struct {
     uint32_t user_esp, ss;
 } __attribute__((packed)) isr_frame_t;
 
-void isr_handler(isr_frame_t *frame);
+typedef void (*isr_t)(const isr_frame_t *frame);
+
+void isr_install(uint8_t isr, isr_t handler);
+
+void isr_uninstall(uint8_t isr);
+
+void isr_handler(const isr_frame_t *frame);
+
+typedef void (*irq_t)(const isr_frame_t *frame);
+
+void irq_install(uint8_t irq, irq_t handler);
+
+void irq_uninstall(uint8_t irq);
+
+void irq_handler(const isr_frame_t *frame);
 
 typedef struct {
     uint16_t isr_low;    // The lower 16bit of the ISRs address

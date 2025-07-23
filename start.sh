@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-qemu-system-i386 $1 $2 -kernel bin/ArkoiOS.bin &
+qemu-system-i386 $1 $2 -no-shutdown -d int -kernel bin/ArkoiOS.bin &

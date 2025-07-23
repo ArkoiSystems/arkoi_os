@@ -41,6 +41,8 @@ add_executable(
     src/lib/kmemory.c
     src/lib/kio.c
     src/drivers/vga.c
+    src/drivers/keyboard.c
+    src/drivers/pit.c
     src/boot/crtn.s
     src/boot/crti.s
     src/boot/boot.s
