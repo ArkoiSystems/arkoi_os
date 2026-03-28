@@ -94,3 +94,5 @@ fabric.properties
 bin
 *.iso
 *.bin
+
+build/

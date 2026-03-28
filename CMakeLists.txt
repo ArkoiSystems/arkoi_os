@@ -1,57 +1,103 @@
-cmake_minimum_required(VERSION 3.30.2)
-project(ArkoiOS)
+cmake_minimum_required(VERSION 3.28)
 
-# Enable assembly language support
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR i686)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+project(ArkoiOS LANGUAGES C ASM)
+
+# Enable ASM explicitly (safer)
 enable_language(ASM)
 
-# System target
-set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR i686)
+# =========================
+# Toolchain Detection
+# =========================
+set(TOOLS "$ENV{TOOLS}" CACHE PATH "Path to cross toolchain")
 
-# Cross compiler toolchain
-set(TOOLS $ENV{HOME}/opt/cross)
-set(CMAKE_C_COMPILER ${TOOLS}/bin/i686-elf-gcc)
-set(CMAKE_CXX_COMPILER ${TOOLS}/bin/i686-elf-g++)
-set(CMAKE_ASM_COMPILER ${TOOLS}/bin/i686-elf-as)
+if(NOT TOOLS)
+    set(TOOLS "$ENV{HOME}/opt/cross" CACHE PATH "Fallback toolchain path")
+endif()
 
-# Compiler flags
-set(CMAKE_CXX_STANDARD 17)
+# Prefer explicit toolchain path
+if(EXISTS "${TOOLS}/bin/i686-elf-gcc")
+    set(CMAKE_C_COMPILER "${TOOLS}/bin/i686-elf-gcc" CACHE FILEPATH "")
+    set(CMAKE_ASM_COMPILER "${TOOLS}/bin/i686-elf-as" CACHE FILEPATH "")
+else()
+    find_program(I686_ELF_GCC i686-elf-gcc REQUIRED)
+    find_program(I686_ELF_AS  i686-elf-as  REQUIRED)
+
+    set(CMAKE_C_COMPILER "${I686_ELF_GCC}" CACHE FILEPATH "")
+    set(CMAKE_ASM_COMPILER "${I686_ELF_AS}" CACHE FILEPATH "")
+endif()
+
+message(STATUS "Using C compiler: ${CMAKE_C_COMPILER}")
+message(STATUS "Using ASM compiler: ${CMAKE_ASM_COMPILER}")
+
+# =========================
+# Standards & Flags
+# =========================
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti")
-set(CMAKE_C_FLAGS "-ffreestanding -O2 -Wall -Wextra")
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
-# Kernel binary and ISO
-set(KERNEL_BIN ${CMAKE_PROJECT_NAME}.bin)
-set(KERNEL_ISO ${CMAKE_PROJECT_NAME}.iso)
+# Common flags
+set(COMMON_FLAGS
+    -ffreestanding
+    -Wall
+    -Wextra
+)
 
-# Create the executable using the linker script
-include_directories(include)
+# Debug vs Release
+set(CMAKE_C_FLAGS_DEBUG   "-O0 -g")
+set(CMAKE_C_FLAGS_RELEASE "-O2")
 
-add_executable(
-    ${KERNEL_BIN}
+# =========================
+# Kernel Target
+# =========================
+set(KERNEL_BIN ${PROJECT_NAME}.bin)
+
+set(SOURCES
     src/kernel.c
+
     src/gdt/gdt.s
     src/gdt/gdt.c
+
     src/idt/idt.s
     src/idt/idt.c
     src/idt/pic.c
+
     src/lib/kstdio.c
     src/lib/kpanic.c
     src/lib/kstring.c
     src/lib/kmemory.c
     src/lib/kio.c
+
     src/drivers/vga.c
     src/drivers/keyboard.c
     src/drivers/pit.c
+
     src/boot/crtn.s
     src/boot/crti.s
     src/boot/boot.s
 )
-set_target_properties(${KERNEL_BIN} PROPERTIES LINK_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker.ld -ffreestanding -O2 -nostdlib -lgcc")
 
-# Copy the output binary into the bin directory
-add_custom_command(
-    TARGET ${KERNEL_BIN} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/bin
-    COMMAND ${CMAKE_COMMAND} -E copy ${KERNEL_BIN} ${CMAKE_SOURCE_DIR}/bin/
+add_executable(${KERNEL_BIN} ${SOURCES})
+
+target_include_directories(${KERNEL_BIN}
+    PRIVATE ${CMAKE_SOURCE_DIR}/include
+)
+
+target_compile_options(${KERNEL_BIN}
+    PRIVATE ${COMMON_FLAGS}
+)
+
+target_link_options(${KERNEL_BIN}
+    PRIVATE
+        -T${CMAKE_SOURCE_DIR}/linker.ld
+        -nostdlib
+        -ffreestanding
+)
+
+target_link_libraries(${KERNEL_BIN}
+    PRIVATE gcc
 )
