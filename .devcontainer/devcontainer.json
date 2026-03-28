@@ -34,14 +34,12 @@
   },
 
   // Debugging support
-  "runArgs": [
-    "--cap-add=SYS_PTRACE",
-    "--security-opt=seccomp=unconfined"
-  ],
+  "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt=seccomp=unconfined"],
 
   // Persistent ccache
   "mounts": [
-    "source=ccache,target=/home/vscode/.cache/ccache,type=volume"
+    "source=ccache,target=/home/vscode/.cache/ccache,type=volume",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly"
   ],
 
   // VS Code setup
