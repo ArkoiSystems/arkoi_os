@@ -6,6 +6,8 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 project(ArkoiOS LANGUAGES C ASM)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Enable ASM explicitly (safer)
 enable_language(ASM)
 
