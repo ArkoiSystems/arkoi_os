@@ -13,6 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    clangd \
     bison \
     flex \
     libgmp3-dev \

@@ -2,10 +2,11 @@
   "cmake.configureOnOpen": true,
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "cmake.exportCompileCommandsFile": true,
+  "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
 
-  "C_Cpp.intelliSenseEngine": "default",
-
-  "files.associations": {
-    "*.h": "c"
-  }
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy",
+    "--query-driver=/opt/cross/bin/i686-elf-*"
+  ],
 }
