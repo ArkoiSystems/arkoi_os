@@ -64,6 +64,7 @@
 
   // Sanity check after build
   "postCreateCommand": "i686-elf-gcc --version && i686-elf-as --version && i686-elf-g++ --version",
+  "postStartCommand": "sudo chown -R vscode:vscode /home/vscode/.cache && mkdir -p /home/vscode/.cache/Microsoft /home/vscode/.cache/vscode-cpptools/arkoi_os || true",
 
   // Default workspace
   "workspaceFolder": "/workspace"
