@@ -54,36 +54,55 @@ set(CMAKE_C_FLAGS_DEBUG   "-O0 -g")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 
 # =========================
+# Target Architecture
+# =========================
+set(ARKOI_ARCH "x86" CACHE STRING "Target architecture")
+set_property(CACHE ARKOI_ARCH PROPERTY STRINGS x86)
+
+if(NOT ARKOI_ARCH STREQUAL "x86")
+    message(FATAL_ERROR "Unsupported ARKOI_ARCH='${ARKOI_ARCH}'. Supported architectures: x86")
+endif()
+
+# =========================
 # Kernel Target
 # =========================
 set(KERNEL_BIN ${PROJECT_NAME}.bin)
 
-set(SOURCES
-    src/kernel.c
+set(KERNEL_SOURCES
+    src/kernel/main.c
+)
 
-    src/gdt/gdt.s
-    src/gdt/gdt.c
+set(ARCH_SOURCES
+    src/arch/x86/gdt/gdt.s
+    src/arch/x86/gdt/gdt.c
+    src/arch/x86/idt/idt.s
+    src/arch/x86/idt/idt.c
+    src/arch/x86/idt/pic.c
+    src/arch/x86/boot/crtn.s
+    src/arch/x86/boot/crti.s
+    src/arch/x86/boot/boot.s
+)
 
-    src/idt/idt.s
-    src/idt/idt.c
-    src/idt/pic.c
+set(DRIVER_SOURCES
+    src/drivers/vga.c
+    src/drivers/keyboard.c
+    src/drivers/pit.c
+)
 
+set(LIB_SOURCES
     src/lib/kstdio.c
     src/lib/kpanic.c
     src/lib/kstring.c
     src/lib/kmemory.c
     src/lib/kio.c
-
-    src/drivers/vga.c
-    src/drivers/keyboard.c
-    src/drivers/pit.c
-
-    src/boot/crtn.s
-    src/boot/crti.s
-    src/boot/boot.s
 )
 
-add_executable(${KERNEL_BIN} ${SOURCES})
+add_executable(${KERNEL_BIN}
+    ${KERNEL_SOURCES}
+    ${ARCH_SOURCES}
+    ${DRIVER_SOURCES}
+    ${LIB_SOURCES}
+)
 
 target_include_directories(${KERNEL_BIN}
     PRIVATE ${CMAKE_SOURCE_DIR}/include
@@ -102,4 +121,9 @@ target_link_options(${KERNEL_BIN}
 
 target_link_libraries(${KERNEL_BIN}
     PRIVATE gcc
+)
+
+set_target_properties(${KERNEL_BIN}
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )

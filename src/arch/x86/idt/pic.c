@@ -1,4 +1,4 @@
-#include "idt/pic.h"
+#include "arch/x86/pic.h"
 
 #include "lib/kio.h"
 

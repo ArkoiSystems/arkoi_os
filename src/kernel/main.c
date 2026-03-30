@@ -3,8 +3,8 @@
 #include "drivers/vga.h"
 #include "lib/symbols.h"
 #include "lib/kstdio.h"
-#include "gdt/gdt.h"
-#include "idt/idt.h"
+#include "arch/x86/gdt.h"
+#include "arch/x86/idt.h"
 
 void kernel_main(void) {
 	vga_initialize();

@@ -1,6 +1,6 @@
 #include "drivers/pit.h"
 
-#include "idt/pic.h"
+#include "arch/x86/pic.h"
 
 volatile uint32_t ticks = 0;
 

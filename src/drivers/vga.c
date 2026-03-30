@@ -5,6 +5,14 @@ static uint16_t *VGA_MEMORY = (uint16_t *) VGA_MEMORY_ADDRESS;
 static uint32_t ROW = 0, COLUMN = 0;
 static uint8_t CURRENT_COLOR = 0;
 
+static uint8_t vga_entry_color(const vga_color_t foreground, const vga_color_t background) {
+    return foreground | background << 4;
+}
+
+static uint16_t vga_entry(const char character, const uint8_t color) {
+    return (uint16_t) character | (uint16_t) color << 8;
+}
+
 static void vga_scroll(void) {
     for (uint16_t y = 1; y < VGA_HEIGHT; y++) {
         for (uint16_t x = 0; x < VGA_WIDTH; x++) {

@@ -1,8 +1,8 @@
-#include "idt/idt.h"
+#include "arch/x86/idt.h"
 
 #include "lib/kstdio.h"
-#include "gdt/gdt.h"
-#include "idt/pic.h"
+#include "arch/x86/gdt.h"
+#include "arch/x86/pic.h"
 #include "lib/kpanic.h"
 
 #define IDT_ENTRIES_AMOUNT 48

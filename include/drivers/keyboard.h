@@ -1,7 +1,7 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include "idt/idt.h"
+#include "arch/x86/idt.h"
 
 void keyboard_initialize();
 

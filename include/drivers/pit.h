@@ -1,7 +1,7 @@
 #ifndef PIT_H
 #define PIT_H
 
-#include "idt/idt.h"
+#include "arch/x86/idt.h"
 
 void pit_initialize();
 

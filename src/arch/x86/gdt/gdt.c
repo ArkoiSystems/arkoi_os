@@ -1,4 +1,4 @@
-#include "gdt/gdt.h"
+#include "arch/x86/gdt.h"
 
 #include "lib/kstdio.h"
 

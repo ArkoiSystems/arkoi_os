@@ -1,8 +1,8 @@
 #include "drivers/keyboard.h"
 
 #include "drivers/vga.h"
-#include "idt/idt.h"
-#include "idt/pic.h"
+#include "arch/x86/idt.h"
+#include "arch/x86/pic.h"
 #include "lib/kio.h"
 
 char scancode_to_ascii[128] = {
