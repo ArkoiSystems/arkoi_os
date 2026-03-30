@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GDB Remote Kernel Debugging" type="CLion_Remote" version="1" remoteCommand="tcp:localhost:1234" symbolFile="$PROJECT_DIR$/bin/ArkoiOS.bin" sysroot="">
-    <debugger kind="GDB" isBundled="true" />
-    <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="ArkoiOS.bin" run_configuration_type="CMakeRunConfiguration" run_configuration_target="CMakeBuildProfile:Debug" />
-      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Run Start" />
-    </method>
-  </configuration>
-</component>
