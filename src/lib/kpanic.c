@@ -2,7 +2,7 @@
 
 #include "lib/kstdio.h"
 
-void panic(const char *format, const char *file, const int line, const char *function, ...) {
+void kpanic(const char *format, const char *file, const int line, const char *function, ...) {
     va_list args;
     va_start(args, function);
 

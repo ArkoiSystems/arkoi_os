@@ -40,7 +40,7 @@ void isr_uninstall(const uint8_t isr) {
 }
 
 void isr_handler(const isr_frame_t *frame) {
-    if (frame->int_no >= 32) PANIC("Invalid ISR with interrupt number %d", frame->int_no);
+    if (frame->int_no >= 32) KPANIC("Invalid ISR with interrupt number %d", frame->int_no);
 
     static char* exception_messages[32] = {
         "Division By Zero",

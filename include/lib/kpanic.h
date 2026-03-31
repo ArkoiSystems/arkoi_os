@@ -1,8 +1,8 @@
-#ifndef PANIC_H
-#define PANIC_H
+#ifndef KPANIC_H
+#define KPANIC_H
 
-#define PANIC(format, ...) panic(format, __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define KPANIC(format, ...) kpanic(format, __FILE__, __LINE__, __func__, __VA_ARGS__)
 
-void panic(const char *format, const char* file, int line, const char* function, ...);
+void kpanic(const char *format, const char* file, int line, const char* function, ...);
 
-#endif //PANIC_H
+#endif //KPANIC_H
