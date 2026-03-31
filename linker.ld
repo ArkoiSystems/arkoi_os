@@ -28,4 +28,10 @@ SECTIONS {
 		*(.bss)
 		_bss_end = .;
 	}
+
+	.heap ALIGN(1M) : {
+		_heap_start = .;
+		. = . + 1M;
+		_heap_end = .;
+	}
 }

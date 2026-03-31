@@ -94,6 +94,7 @@ set(LIB_SOURCES
     src/lib/kpanic.c
     src/lib/kstring.c
     src/lib/kmemory.c
+    src/lib/kmalloc.c
     src/lib/kio.c
 )
 
