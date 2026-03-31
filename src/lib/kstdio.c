@@ -72,7 +72,7 @@ static uint32_t write_hex(char *buffer, const uint32_t size, const uint32_t valu
     return write_buffer(buffer, size, output, position);
 }
 
-uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, const va_list args) {
+uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, va_list args) {
     if (size == 0) return 0;
 
     // Ensures that there is always room for the amount of character to write and a null terminator.

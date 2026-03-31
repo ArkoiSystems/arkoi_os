@@ -23,7 +23,7 @@ void keyboard_initialize() {
     pic_clear_mask(1);
 }
 
-void keyboard_handler(const isr_frame_t *) {
+void keyboard_handler([[maybe_unused]] const isr_frame_t *frame) {
     const uint8_t scancode = inb(0x60);
 
     const int released = is_key_released(scancode);

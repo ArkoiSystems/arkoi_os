@@ -9,6 +9,6 @@ void pit_initialize() {
     pic_clear_mask(0);
 }
 
-void pit_handler(const isr_frame_t *) {
+void pit_handler([[maybe_unused]] const isr_frame_t *frame) {
     ticks++;
 }

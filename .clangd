@@ -4,3 +4,5 @@ CompileFlags:
     - -ffreestanding
     - -nostdlib
     - -m32
+Diagnostics:
+  UnusedIncludes: None
