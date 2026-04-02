@@ -76,16 +76,16 @@ static void add_to_list(block_t* block, const int order) {
 }
 
 void kmalloc_init() {
-    // Ensure the heap start address is properly aligned for the buddy allocator
-    if ((SYMBOL_START(heap) & (BLOCK_SIZE(MAX_ORDER) - 1)) != 0) {
-        KPANIC("Heap with start address %x is not properly aligned for buddy allocator", SYMBOL_START(heap));
-    }
-
     // Ensure the heap size is large enough to accommodate at least one block of the maximum order
     if(SYMBOL_SIZE(heap) < BLOCK_SIZE(MAX_ORDER)) {
         KPANIC("Heap size %d is too small for allocator (min %d bytes)", SYMBOL_SIZE(heap), BLOCK_SIZE(MAX_ORDER));
     }
 
+    // Ensure the heap start address is properly aligned for the buddy allocator
+    if ((SYMBOL_START(heap) & (BLOCK_SIZE(MAX_ORDER) - 1)) != 0) {
+        KPANIC("Heap with start address %x is not properly aligned for buddy allocator", SYMBOL_START(heap));
+    }
+    
     // Initialize all free lists to NULL
     for (size_t order = MIN_ORDER; order <= MAX_ORDER; order++) {
         FREE_LISTS(order) = NULL;
@@ -152,12 +152,25 @@ void *kmalloc(size_t size) {
     uintptr_t block_address = (uintptr_t) target_block;
     uintptr_t start_address = block_address + sizeof(block_t);
 
+    kprintf("Allocated block at %x with order %d for requested size %d\n", block_address, target_block->order, size);
+
     return (void *) start_address;
 }
 
 void kfree(void *ptr) {
-    // Validate that the pointer being freed is within the bounds of the heap
+    // If the pointer is NULL, we can simply ignore the free request as there is nothing to free
+    if (ptr == NULL) {
+        return;
+    }
+
     uintptr_t start_address = (uintptr_t) ptr;
+
+    // Validate that the pointer is properly aligned
+    if (start_address & (sizeof(block_t) - 1)) {
+        KPANIC("Attempted to free a pointer %x that is not properly aligned", start_address);
+    }
+
+    // Validate that the pointer is within the bounds of the heap
     if (start_address < SYMBOL_START(heap) || start_address >= SYMBOL_END(heap)) {
         KPANIC("Attempted to free a pointer %x that is outside of the heap bounds", start_address);
     }
@@ -166,6 +179,14 @@ void kfree(void *ptr) {
     // to calculate the address of the block header
     uintptr_t block_address = start_address - sizeof(block_t);
     block_t *block = (block_t *) block_address;
+
+    if (block->order < MIN_ORDER || block->order > MAX_ORDER) {
+        KPANIC("Attempted to free pointer %x with invalid block order %d", start_address, block->order);
+    }
+
+    if (block->is_free) {
+        KPANIC("Double free detected for pointer %x", start_address);
+    }
 
     // Mark the block as free before attempting to coalesce with its buddy
     block->is_free = true;

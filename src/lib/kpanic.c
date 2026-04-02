@@ -11,4 +11,10 @@ void kpanic(const char *format, const char *file, const int line, const char *fu
     kprintf("\n");
 
     va_end(args);
+
+    // Panic must never return; disable interrupts and halt forever.
+    __asm__ volatile("cli");
+    for (;;) {
+        __asm__ volatile("hlt");
+    }
 }
