@@ -75,5 +75,26 @@ void kernel_main(void) {
 	kfree(ptr_5);
 	kprintf("kfree(%x)\n", ptr_5);
 
-    while(1);
+    while(1) {
+		if (!keyboard_has_event()) {
+			continue;
+		}
+
+		keyboard_event_t event;
+		keyboard_get_event(&event);
+
+		if (!event.is_pressed) {
+			continue;
+		}
+
+		char ascii;
+		
+		size_t result = keyboard_scancode_to_ascii(&event, &ascii);
+		if (result != 0) {
+			continue;
+		}
+
+		vga_set_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+		vga_put_char(ascii);
+	}
 }
