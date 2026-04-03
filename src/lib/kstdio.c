@@ -7,9 +7,9 @@
 #include "lib/kmemory.h"
 #include "lib/kstring.h"
 
-static const char *HEX_DIGITS = "0123456789ABCDEF";
+static const char* HEX_DIGITS = "0123456789ABCDEF";
 
-static uint32_t write_buffer(char *buffer, const uint32_t size, const char *value, const uint32_t length) {
+static uint32_t write_buffer(char* buffer, const uint32_t size, const char* value, const uint32_t length) {
     if (size == 0) return 0;
 
     // Check if the message fits into the buffer if not return 0.
@@ -21,7 +21,7 @@ static uint32_t write_buffer(char *buffer, const uint32_t size, const char *valu
     return length;
 }
 
-static uint32_t write_dec(char *buffer, const uint32_t size, int32_t value) {
+static uint32_t write_dec(char* buffer, const uint32_t size, int32_t value) {
     if (size == 0) return 0;
 
     // -2^(32 - 1) ... 2^(32 - 1) - 1
@@ -45,7 +45,7 @@ static uint32_t write_dec(char *buffer, const uint32_t size, int32_t value) {
 
     while (divisor != 0) {
         const uint32_t digit = value / divisor;
-        output[position++] = (char) ('0' + digit);
+        output[position++] = (char)('0' + digit);
         value %= divisor;
         divisor /= 10;
     }
@@ -53,7 +53,7 @@ static uint32_t write_dec(char *buffer, const uint32_t size, int32_t value) {
     return write_buffer(buffer, size, output, position);
 }
 
-static uint32_t write_hex(char *buffer, const uint32_t size, const uint32_t value) {
+static uint32_t write_hex(char* buffer, const uint32_t size, const uint32_t value) {
     if (size == 0) return 0;
 
     // 0xFFFFFFFF is the maximum number to display, thus only needing 10 characters.
@@ -72,10 +72,10 @@ static uint32_t write_hex(char *buffer, const uint32_t size, const uint32_t valu
     return write_buffer(buffer, size, output, position);
 }
 
-uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, va_list args) {
+uint32_t vsnprintf(char* buffer, const uint32_t size, const char* format, va_list args) {
     if (size == 0) return 0;
 
-    // Ensures that there is always room for the amount of character to write and a null terminator.
+        // Ensures that there is always room for the amount of character to write and a null terminator.
 #define ENOUGH_SLOTS_FREE(amount) ((position + amount) < (size - 1))
 
     const uint32_t format_length = strlen(format);
@@ -117,7 +117,7 @@ uint32_t vsnprintf(char *buffer, const uint32_t size, const char *format, va_lis
                 break;
             }
             case 's': {
-                const char *value = va_arg(args, char *);
+                const char* value = va_arg(args, char*);
                 if (value == NULL) value = "(null)";
 
                 const uint32_t length = strlen(value);
@@ -157,7 +157,7 @@ cleanup:
     return position;
 }
 
-uint32_t snprintf(char *buffer, const uint32_t size, const char *format, ...) {
+uint32_t snprintf(char* buffer, const uint32_t size, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
@@ -167,7 +167,7 @@ uint32_t snprintf(char *buffer, const uint32_t size, const char *format, ...) {
     return written;
 }
 
-uint32_t kvprintf(const char *format, const va_list args) {
+uint32_t kvprintf(const char* format, const va_list args) {
     static const uint32_t PRINTF_BUFFER_SIZE = 256;
     char buffer[PRINTF_BUFFER_SIZE];
 
@@ -177,7 +177,7 @@ uint32_t kvprintf(const char *format, const va_list args) {
     return written;
 }
 
-uint32_t kprintf(const char *format, ...) {
+uint32_t kprintf(const char* format, ...) {
     va_list args;
     va_start(args, format);
 
