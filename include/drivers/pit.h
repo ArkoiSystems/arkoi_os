@@ -5,6 +5,6 @@
 
 void pit_initialize();
 
-void pit_handler(const isr_frame_t *frame);
+void pit_handler(const isr_frame_t* frame);
 
-#endif //PIT_H
+#endif // PIT_H

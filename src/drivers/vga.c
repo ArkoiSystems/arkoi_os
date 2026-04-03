@@ -1,6 +1,6 @@
 #include "drivers/vga.h"
 
-static uint16_t *VGA_MEMORY = (uint16_t *) VGA_MEMORY_ADDRESS;
+static uint16_t* VGA_MEMORY = (uint16_t*)VGA_MEMORY_ADDRESS;
 
 static uint32_t ROW = 0, COLUMN = 0;
 static uint8_t CURRENT_COLOR = 0;
@@ -10,7 +10,7 @@ static uint8_t vga_entry_color(const vga_color_t foreground, const vga_color_t b
 }
 
 static uint16_t vga_entry(const char character, const uint8_t color) {
-    return (uint16_t) character | (uint16_t) color << 8;
+    return (uint16_t)character | (uint16_t)color << 8;
 }
 
 static void vga_scroll(void) {
@@ -55,7 +55,7 @@ void vga_put_char(const char character) {
     }
 }
 
-void vga_write(const char *data) {
+void vga_write(const char* data) {
     while (*data) {
         vga_put_char(*data);
         data++;

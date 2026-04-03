@@ -49,7 +49,9 @@
         "llvm-vs-code-extensions.vscode-clangd",
         "ms-vscode.cmake-tools",
         "twxs.cmake",
-        "ms-vscode.hexeditor"
+        "ms-vscode.hexeditor",
+        "cschlosser.doxdocgen",
+        "xaver.clang-format"
       ]
     }
   },

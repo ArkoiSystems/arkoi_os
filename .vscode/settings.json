@@ -9,4 +9,7 @@
     "--clang-tidy",
     "--query-driver=/opt/cross/bin/i686-elf-*"
   ],
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "xaver.clang-format",
 }

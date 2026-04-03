@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#define VGA_WIDTH           80
-#define VGA_HEIGHT          25
-#define VGA_MEMORY_ADDRESS  0xB8000
+#define VGA_WIDTH 80
+#define VGA_HEIGHT 25
+#define VGA_MEMORY_ADDRESS 0xB8000
 
 typedef enum {
     VGA_COLOR_BLACK = 0,
@@ -72,7 +72,7 @@ void vga_put_char(char character);
  * @param data A pointer to the null-terminated string to be written
  *             to the VGA text-mode buffer.
  */
-void vga_write(const char *data);
+void vga_write(const char* data);
 
 /**
  * @brief Clears the VGA text-mode buffer and resets cursor position.
@@ -87,4 +87,4 @@ void vga_write(const char *data);
  */
 void vga_clear(void);
 
-#endif //VGA_H
+#endif // VGA_H

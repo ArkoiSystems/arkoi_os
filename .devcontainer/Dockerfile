@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     ninja-build \
     gdb-multiarch \
+    clang-format \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and extract sources

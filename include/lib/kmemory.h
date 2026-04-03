@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void *memcpy(void *destination, const void *source, uint32_t size);
+void* memcpy(void* destination, const void* source, uint32_t size);
 
-#endif //KMEMORY_H
+#endif // KMEMORY_H

@@ -1,9 +1,9 @@
 #include "arch/x86/idt.h"
 
-#include "lib/kstdio.h"
 #include "arch/x86/gdt.h"
 #include "arch/x86/pic.h"
 #include "lib/kpanic.h"
+#include "lib/kstdio.h"
 
 #define IDT_ENTRIES_AMOUNT 48
 
@@ -11,21 +11,54 @@ static idt_entry_t idt_entries[IDT_ENTRIES_AMOUNT];
 static idt_ptr_t idt_ptr;
 
 extern void* isr_stub_table[];
-static isr_t isr_handlers[32] = {0};
+static isr_t isr_handlers[32] = { 0 };
 
 extern void* irq_stub_table[];
-static irq_t irq_handlers[16] = {0};
+static irq_t irq_handlers[16] = { 0 };
+
+static char* exception_messages[32] = { [EXCEPTION_DIVIDE_BY_ZERO] = "Division By Zero",
+                                        [EXCEPTION_DEBUG] = "Debug",
+                                        [EXCEPTION_NON_MASKABLE_INTERRUPT] = "Non Maskable Interrupt",
+                                        [EXCEPTION_BREAKPOINT] = "Breakpoint",
+                                        [EXCEPTION_INTO_DETECTED_OVERFLOW] = "Into Detected Overflow",
+                                        [EXCEPTION_OUT_OF_BOUNDS] = "Out of Bounds",
+                                        [EXCEPTION_INVALID_OPCODE] = "Invalid Opcode",
+                                        [EXCEPTION_NO_COPROCESSOR] = "No Coprocessor",
+                                        [EXCEPTION_DOUBLE_FAULT] = "Double fault",
+                                        [EXCEPTION_COPROCESSOR_SEGMENT_OVERRUN] = "Coprocessor Segment Overrun",
+                                        [EXCEPTION_BAD_TSS] = "Bad TSS",
+                                        [EXCEPTION_SEGMENT_NOT_PRESENT] = "Segment not present",
+                                        [EXCEPTION_STACK_FAULT] = "Stack fault",
+                                        [EXCEPTION_GENERAL_PROTECTION_FAULT] = "General protection fault",
+                                        [EXCEPTION_PAGE_FAULT] = "Page fault",
+                                        [EXCEPTION_UNKNOWN_INTERRUPT] = "Unknown Interrupt",
+                                        [EXCEPTION_COPROCESSOR_FAULT] = "Coprocessor Fault",
+                                        [EXCEPTION_ALIGNMENT_FAULT] = "Alignment Fault",
+                                        [EXCEPTION_MACHINE_CHECK] = "Machine Check",
+                                        [EXCEPTION_RESERVED_19] = "Reserved",
+                                        [EXCEPTION_RESERVED_20] = "Reserved",
+                                        [EXCEPTION_RESERVED_21] = "Reserved",
+                                        [EXCEPTION_RESERVED_22] = "Reserved",
+                                        [EXCEPTION_RESERVED_23] = "Reserved",
+                                        [EXCEPTION_RESERVED_24] = "Reserved",
+                                        [EXCEPTION_RESERVED_25] = "Reserved",
+                                        [EXCEPTION_RESERVED_26] = "Reserved",
+                                        [EXCEPTION_RESERVED_27] = "Reserved",
+                                        [EXCEPTION_RESERVED_28] = "Reserved",
+                                        [EXCEPTION_RESERVED_29] = "Reserved",
+                                        [EXCEPTION_RESERVED_30] = "Reserved",
+                                        [EXCEPTION_RESERVED_31] = "Reserved" };
 
 void idt_initialize() {
-    idt_ptr = idt_create_ptr(IDT_ENTRIES_AMOUNT, (uint32_t) &idt_entries);
+    idt_ptr = idt_create_ptr(IDT_ENTRIES_AMOUNT, (uint32_t)&idt_entries);
 
     for (uint8_t vector = 0; vector < 32; vector++) {
-        idt_entries[vector] = idt_create_entry((uint32_t) isr_stub_table[vector], 0x8E);
+        idt_entries[vector] = idt_create_entry((uint32_t)isr_stub_table[vector], 0x8E);
     }
 
     pic_remap(0x20, 0x28);
     for (uint8_t vector = 32; vector < 48; vector++) {
-        idt_entries[vector] = idt_create_entry((uint32_t) irq_stub_table[vector - 32], 0x8E);
+        idt_entries[vector] = idt_create_entry((uint32_t)irq_stub_table[vector - 32], 0x8E);
     }
 
     idt_load(&idt_ptr);
@@ -39,53 +72,24 @@ void isr_uninstall(const uint8_t isr) {
     isr_handlers[isr] = 0;
 }
 
-void isr_handler(const isr_frame_t *frame) {
-    if (frame->int_no >= 32) KPANIC("Invalid ISR with interrupt number %d", frame->int_no);
+void isr_handler(const isr_frame_t* frame) {
+    if (frame->int_no >= 32) {
+        KPANIC("Invalid ISR with interrupt number %d", frame->int_no);
+    }
 
-    static char* exception_messages[32] = {
-        "Division By Zero",
-        "Debug",
-        "Non Maskable Interrupt",
-        "Breakpoint",
-        "Into Detected Overflow",
-        "Out of Bounds",
-        "Invalid Opcode",
-        "No Coprocessor",
-        "Double fault",
-        "Coprocessor Segment Overrun",
-        "Bad TSS",
-        "Segment not present",
-        "Stack fault",
-        "General protection fault",
-        "Page fault",
-        "Unknown Interrupt",
-        "Coprocessor Fault",
-        "Alignment Fault",
-        "Machine Check",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved",
-        "Reserved"
-    };
+    isr_exception_t exception = frame->int_no;
+    char* message = exception_messages[exception];
 
-    char *message = exception_messages[frame->int_no];
-    kprintf("Interrupt: %d (%s)\n", frame->int_no, message);
-
-    if (frame->int_no == 14) {
+    if (exception == EXCEPTION_PAGE_FAULT) {
         kprintf("Page fault at address: %x\n", frame->cr2);
+    } else {
+        kprintf("Interrupt: %d (%s)\n", exception, message);
     }
 
     isr_t handler = isr_handlers[frame->int_no];
-    if (handler) handler(frame);
+    if (handler) {
+        handler(frame);
+    }
 
     __asm__ volatile("cli; hlt" ::: "memory");
 }
@@ -98,7 +102,7 @@ void irq_uninstall(const uint8_t irq) {
     irq_handlers[irq] = 0;
 }
 
-void irq_handler(const isr_frame_t *frame) {
+void irq_handler(const isr_frame_t* frame) {
     const uint32_t irq = frame->int_no - 32;
 
     const irq_t handler = irq_handlers[irq];

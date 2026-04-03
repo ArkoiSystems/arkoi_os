@@ -1,12 +1,13 @@
 #include "drivers/keyboard.h"
 
-#include "drivers/vga.h"
-#include "arch/x86/idt.h"
-#include "arch/x86/pic.h"
-#include "lib/kbuffer.h"
-#include "lib/kio.h"
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "arch/x86/idt.h"
+#include "arch/x86/pic.h"
+#include "drivers/vga.h"
+#include "lib/kbuffer.h"
+#include "lib/kio.h"
 
 #define KEYBOARD_BUFFER_SIZE 256
 
@@ -42,7 +43,7 @@ static void handle_scancode(const uint16_t raw_scancode, bool extended) {
     const uint16_t scancode_prefix = (extended ? EXTENDED_SCANCODE_PREFIX : 0x00) << 8;
     const uint16_t extended_scancode = scancode_prefix | keycode;
 
-    const keyboard_scancode_t scancode = (keyboard_scancode_t) extended_scancode;
+    const keyboard_scancode_t scancode = (keyboard_scancode_t)extended_scancode;
     if (scancode == SCANCODE_LEFT_SHIFT || scancode == SCANCODE_RIGHT_SHIFT) {
         SHIFT_HELD = !is_released;
     } else if (scancode == SCANCODE_LEFT_CTRL || scancode == SCANCODE_RIGHT_CTRL) {
@@ -53,20 +54,18 @@ static void handle_scancode(const uint16_t raw_scancode, bool extended) {
         CAPS_LOCKED = !CAPS_LOCKED;
     }
 
-    keyboard_event_t event = {
-        .keycode = keycode,
-        .scancode = scancode,
-        .is_pressed = !is_released,
-        .shift_held = SHIFT_HELD,
-        .ctrl_held = CTRL_HELD,
-        .alt_held = ALT_HELD,
-        .caps_locked = CAPS_LOCKED
-    };
+    keyboard_event_t event = { .keycode = keycode,
+                               .scancode = scancode,
+                               .is_pressed = !is_released,
+                               .shift_held = SHIFT_HELD,
+                               .ctrl_held = CTRL_HELD,
+                               .alt_held = ALT_HELD,
+                               .caps_locked = CAPS_LOCKED };
 
     cyclic_buffer_push(&KEYBOARD_BUFFER, &event);
 }
 
-void keyboard_handler([[maybe_unused]] const isr_frame_t *frame) {
+void keyboard_handler([[maybe_unused]] const isr_frame_t* frame) {
     while (inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER_FULL) {
         const uint8_t scancode = inb(PS2_DATA_PORT);
 
@@ -86,7 +85,7 @@ bool keyboard_has_event() {
     return !cyclic_buffer_is_empty(&KEYBOARD_BUFFER);
 }
 
-void keyboard_get_event(keyboard_event_t *event) {
+void keyboard_get_event(keyboard_event_t* event) {
     if (!keyboard_has_event()) {
         // TODO(tbd): Report error
         return;
@@ -95,7 +94,7 @@ void keyboard_get_event(keyboard_event_t *event) {
     cyclic_buffer_pop(&KEYBOARD_BUFFER, event);
 }
 
-size_t keyboard_scancode_to_ascii(const keyboard_event_t *event, char *ascii) {
+size_t keyboard_scancode_to_ascii(const keyboard_event_t* event, char* ascii) {
     if (event->scancode >= 128) {
         return 1;
     }

@@ -7,11 +7,11 @@
 
 #include "lib/kassert.h"
 
-#define MAX_ORDER (20U)  // 2^20 = 1048576 bytes (1 MiB)
-#define MIN_ORDER (10U)  // 2^10 = 1024 bytes
+#define MAX_ORDER (20U) // 2^20 = 1048576 bytes (1 MiB)
+#define MIN_ORDER (10U) // 2^10 = 1024 bytes
 
 typedef struct block {
-    struct block *next;
+    struct block* next;
     uint8_t order;
     bool is_free;
 } block_t;
@@ -21,8 +21,8 @@ STATIC_ASSERT((sizeof(block_t) == 8), BLOCK_HEADER_SIZE_MUST_BE_8_BYTES);
 
 void kmalloc_init();
 
-void *kmalloc(size_t size);
+void* kmalloc(size_t size);
 
-void kfree(void *ptr);
+void kfree(void* ptr);
 
-#endif //KMALLOC_H
+#endif // KMALLOC_H
