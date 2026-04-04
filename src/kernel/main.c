@@ -1,5 +1,5 @@
-#include "arch/x86/gdt.h"
-#include "arch/x86/idt.h"
+#include "arch/x86/gdt/gdt.h"
+#include "arch/x86/idt/idt.h"
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/vga.h"

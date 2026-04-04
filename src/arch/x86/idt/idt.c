@@ -1,7 +1,7 @@
-#include "arch/x86/idt.h"
+#include "arch/x86/idt/idt.h"
 
-#include "arch/x86/gdt.h"
-#include "arch/x86/pic.h"
+#include "arch/x86/gdt/gdt.h"
+#include "arch/x86/idt/pic.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
 

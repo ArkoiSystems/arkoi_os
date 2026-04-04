@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "arch/x86/idt.h"
+#include "arch/x86/idt/idt.h"
 #include "lib/kbuffer.h"
 
 typedef enum {

@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "arch/x86/idt.h"
-#include "arch/x86/pic.h"
+#include "arch/x86/idt/idt.h"
+#include "arch/x86/idt/pic.h"
 #include "drivers/vga.h"
 #include "lib/kbuffer.h"
 #include "lib/kio.h"
