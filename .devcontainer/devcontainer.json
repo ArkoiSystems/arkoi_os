@@ -51,7 +51,8 @@
         "twxs.cmake",
         "ms-vscode.hexeditor",
         "cschlosser.doxdocgen",
-        "xaver.clang-format"
+        "xaver.clang-format",
+        "zixuanwang.linkerscript"
       ]
     }
   },
