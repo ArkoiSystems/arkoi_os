@@ -39,7 +39,7 @@ cmake --build build
 ```
 
 Optional:
-- Override kernel path: `KERNEL_BIN=build/ArkoiOS.bin ./start.sh`
+- Override kernel path: `ISO_BIN=build/ArkoiOS.bin ./start.sh`
 - Pass QEMU flags directly: `./start.sh -serial stdio`
 
 ## Extending The Project

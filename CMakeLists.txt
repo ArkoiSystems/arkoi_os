@@ -129,3 +129,22 @@ set_target_properties(${KERNEL_BIN}
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
+
+# =========================
+# GRUB ISO Packaging (Multiboot)
+# =========================
+set(ISO_NAME "${PROJECT_NAME}.iso")
+set(ISO_PATH "${CMAKE_BINARY_DIR}/${ISO_NAME}")
+set(ISO_ROOT "${CMAKE_BINARY_DIR}/isodir")
+set(GRUB_CFG_SOURCE "${CMAKE_SOURCE_DIR}/grub/grub.cfg")
+
+add_custom_target(iso ALL
+    DEPENDS ${KERNEL_BIN}
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ISO_ROOT}/boot/grub"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${KERNEL_BIN}>" "${ISO_ROOT}/boot/${KERNEL_BIN}"
+    COMMAND ${CMAKE_COMMAND} -E copy "${GRUB_CFG_SOURCE}" "${ISO_ROOT}/boot/grub/grub.cfg"
+    COMMAND grub-mkrescue -o "${ISO_PATH}" "${ISO_ROOT}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    COMMENT "Building bootable GRUB ISO: ${ISO_PATH}"
+    VERBATIM
+)

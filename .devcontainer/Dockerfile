@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ninja-build \
     gdb-multiarch \
     clang-format \
+    grub-common \
+    xorriso \
+    grub-pc-bin \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and extract sources

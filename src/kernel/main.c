@@ -8,6 +8,12 @@
 #include "lib/kstdio.h"
 #include "lib/symbols.h"
 
+#if defined(__linux__)
+#error "This kernel is not meant to be compiled on Linux!"
+#elif !defined(__i386__)
+#error "This kernel needs to be compiled with a x86-elf compiler!"
+#endif
+
 void kernel_main(void) {
     vga_initialize();
     kprintf("VGA initialized!\n");
