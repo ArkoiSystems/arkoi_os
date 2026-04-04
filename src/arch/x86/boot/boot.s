@@ -1,16 +1,20 @@
-# Declare constants for the multiboot header
-.set MB_ALIGN,    1<<0                   # Align loaded modules on page boundaries
-.set MB_MEMINFO,  1<<1                   # Provide memory map
-.set MB_FLAGS,    MB_ALIGN | MB_MEMINFO  # This is the Multiboot 'flag' field
-.set MB_MAGIC,    0x1BADB002             # The 'magic number' lets bootloader find the header
-.set MB_CHECKSUM, -(MB_MAGIC + MB_FLAGS) # Checksum of above, to prove we are multiboot
+# Declare constants for the Multiboot2 header
+.set MB2_MAGIC,        0xE85250D6
+.set MB2_ARCH,         0
+.set MB2_HEADER_LEN,   24
+.set MB2_CHECKSUM,     -(MB2_MAGIC + MB2_ARCH + MB2_HEADER_LEN)
+.set MB2_BOOT_MAGIC,   0x36D76289
 
-# Declare a header as in the Multiboot Standard
+# Declare a Multiboot2 header. The mandatory end tag has type=0, size=8.
 .section .multiboot
-.align 4
-.long MB_MAGIC
-.long MB_FLAGS
-.long MB_CHECKSUM
+.align 8
+.long MB2_MAGIC
+.long MB2_ARCH
+.long MB2_HEADER_LEN
+.long MB2_CHECKSUM
+.short 0
+.short 0
+.long 8
 
 # Reserve a stack for the initial thread
 .section .bss
@@ -27,11 +31,19 @@ stack_top:
 _start:
     mov $stack_top, %esp
 
+    # Verify Multiboot2 handoff
+    cmpl $MB2_BOOT_MAGIC, %eax
+    jne hang
+    # Preserve the pointer to the Multiboot2 info structure in %esi for later use
+    mov %ebx, %esi
+
     # Call the global constructors
     call _init
 
-    # Transfer the control to the main kernel
+    # Transfer control to the kernel and pass Multiboot2 info pointer as first arg
+    push %esi
     call kernel_main
+    add $4, %esp
 
     # Hang if kernel_main unexpectedly returns
 hang:

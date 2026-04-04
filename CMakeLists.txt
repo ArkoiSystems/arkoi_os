@@ -81,6 +81,7 @@ set(ARCH_SOURCES
     src/arch/x86/boot/crtn.s
     src/arch/x86/boot/crti.s
     src/arch/x86/boot/boot.s
+    src/arch/x86/boot/multiboot2.c
 )
 
 set(DRIVER_SOURCES
