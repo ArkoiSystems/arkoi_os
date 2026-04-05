@@ -19,11 +19,6 @@
 #define MULTIBOOT2_MEMORY_NVS 4
 #define MULTIBOOT2_MEMORY_BADRAM 5
 
-#define BOOT_MAX_NAME_LENGTH 256
-#define BOOT_MAX_COMMAND_LINE_LENGTH 256
-#define BOOT_MAX_MEMORY_REGIONS 32
-#define BOOT_MAX_MODULES 8
-
 typedef struct {
     uint32_t type;
     uint32_t size;
@@ -108,33 +103,34 @@ typedef struct {
     multiboot2_tag_t tags[];
 } __attribute__((packed)) multiboot2_info_t;
 
-typedef struct {
+typedef struct boot_memory_region {
     uint64_t base_address;
     uint64_t length;
+    struct boot_memory_region* next;
 } boot_memory_region_t;
 
-typedef struct {
-    boot_memory_region_t regions[BOOT_MAX_MEMORY_REGIONS];
-    uint32_t count;
-} boot_memory_map_t;
-
-typedef struct {
+typedef struct boot_module {
     uint32_t mod_start;
     uint32_t mod_end;
-    char command_line[BOOT_MAX_COMMAND_LINE_LENGTH];
+    char* command_line;
+    struct boot_module* next;
 } boot_module_t;
 
 typedef struct {
-    char name[BOOT_MAX_NAME_LENGTH];
-    char command_line[BOOT_MAX_COMMAND_LINE_LENGTH];
-    boot_memory_map_t ram;
-    boot_memory_map_t reserved;
-    boot_module_t modules[BOOT_MAX_MODULES];
+    char* name;
+    char* command_line;
+    boot_memory_region_t* ram_regions;
+    boot_memory_region_t* reserved_regions;
+    boot_module_t* modules;
     uint32_t module_count;
 } boot_info_t;
 
 void multiboot2_parse_boot_info(const multiboot2_info_t* mb2_info, boot_info_t* boot_info);
 
-uint64_t multiboot2_memory_map_size(const boot_memory_map_t* memory_map);
+void multiboot2_print_boot_info(const boot_info_t* boot_info);
+
+uint64_t multiboot2_memory_map_size(const boot_memory_region_t* regions);
+
+uint32_t multiboot2_memory_map_count(const boot_memory_region_t* regions);
 
 #endif // MULTIBOOT2_H

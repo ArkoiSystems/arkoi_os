@@ -29,6 +29,12 @@ SECTIONS {
 		_bss_end = .;
 	}
 
+	.early_heap BLOCK(4K) : ALIGN(4K) {
+		_early_heap_start = .;
+		. = . + 8K;
+		_early_heap_end = .;
+	}
+
 	.heap ALIGN(1M) : {
 		_heap_start = .;
 		. = . + 1M;

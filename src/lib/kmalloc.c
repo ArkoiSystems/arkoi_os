@@ -4,7 +4,7 @@
 
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
-#include "lib/symbols.h"
+#include "lib/ksymbols.h"
 
 #define REL_ORDER(order) ((order) - MIN_ORDER) // Convert an order to an index in the free lists array
 #define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1) // Total number of orders we support

@@ -6,10 +6,11 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/vga.h"
+#include "lib/early_alloc.h"
 #include "lib/kmalloc.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
-#include "lib/symbols.h"
+#include "lib/ksymbols.h"
 
 #if defined(__linux__)
 #error "This kernel is not meant to be compiled on Linux!"
@@ -19,49 +20,10 @@
 
 void kernel_main(multiboot2_info_t* mb2_info) {
     vga_initialize();
-    kprintf("VGA initialized!\n");
 
-    // Parse the Multiboot2 info structure provided by the bootloader
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
-
-    kprintf("Booted using the \"%s\" boot loader\n", boot_info.name);
-    kprintf("The command line is \"%s\"\n", boot_info.command_line);
-
-    kprintf("RAM has a size of %d MB\n", multiboot2_memory_map_size(&boot_info.ram) / (1024 * 1024));
-    for (size_t index = 0; index < boot_info.ram.count; index++) {
-        boot_memory_region_t* region = &boot_info.ram.regions[index];
-
-        // Cast the addresses to uint32_t as the kprintf doesnt support 64-bit values yet.
-        uint32_t start_address = region->base_address;
-        uint32_t end_address = region->base_address + region->length;
-        uint32_t size = region->length / 1024;
-
-        kprintf(" - RAM Region %d: %x - %x (%d KB)\n", index, start_address, end_address, size);
-    }
-
-    kprintf("There are %d reserved memory regions\n", boot_info.reserved.count);
-    for (size_t index = 0; index < boot_info.reserved.count; index++) {
-        boot_memory_region_t* region = &boot_info.reserved.regions[index];
-
-        // Cast the addresses to uint32_t as the kprintf doesnt support 64-bit values yet.
-        uint32_t start_address = region->base_address;
-        uint32_t end_address = region->base_address + region->length;
-        uint32_t size = region->length / 1024;
-
-        kprintf(" - Reserved Region %d: %x - %x (%d KB)\n", index, start_address, end_address, size);
-    }
-
-    kprintf("There are %d modules loaded", boot_info.module_count);
-    for (size_t index = 0; index < boot_info.module_count; index++) {
-        boot_module_t* module = &boot_info.modules[index];
-
-        uint32_t start_address = module->mod_start;
-        uint32_t end_address = module->mod_end;
-        uint32_t size = module->mod_end - module->mod_start;
-
-        kprintf(" - Module %d: %x - %x (%d KB)\n", index, start_address, end_address, size / 1024);
-    }
+    multiboot2_print_boot_info(&boot_info);
 
     while (1);
 

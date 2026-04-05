@@ -1,5 +1,7 @@
 #include "drivers/vga.h"
 
+#include "lib/kstdio.h"
+
 static uint16_t* VGA_MEMORY = (uint16_t*)VGA_MEMORY_ADDRESS;
 
 static uint32_t ROW = 0, COLUMN = 0;
@@ -33,6 +35,8 @@ static void vga_scroll(void) {
 void vga_initialize(void) {
     vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     vga_clear();
+
+    kprintf("VGA initialized!\n");
 }
 
 void vga_set_color(const vga_color_t foreground, const vga_color_t background) {
