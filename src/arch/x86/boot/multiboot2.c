@@ -2,30 +2,58 @@
 
 #include <stdint.h>
 
+#include "lib/kmemory.h"
+#include "lib/kpanic.h"
+#include "lib/kstring.h"
+
 static void parse_memory_map(const multiboot2_tag_memory_map_t* mb2_basic_info, boot_info_t* boot_info) {
     uint8_t* start = (uint8_t*)mb2_basic_info->entries;
     uint8_t* end = (uint8_t*)mb2_basic_info + mb2_basic_info->size;
-
-    uint32_t ram_region_index = 0;
 
     uint8_t* current = start;
     while (current < end) {
         multiboot2_memory_map_entry_t* entry = (multiboot2_memory_map_entry_t*)current;
 
-        uint64_t base = entry->base_addr;
+        uint64_t base = entry->base_address;
         uint64_t length = entry->length;
         uint32_t type = entry->type;
 
         if (type == MULTIBOOT2_MEMORY_MAP_RAM) {
-            boot_info->ram_regions[ram_region_index].base_addr = base;
-            boot_info->ram_regions[ram_region_index].length = length;
-            ram_region_index++;
+            boot_info->ram.regions[boot_info->ram.count].base_address = base;
+            boot_info->ram.regions[boot_info->ram.count].length = length;
+            boot_info->ram.count++;
         }
 
         current += mb2_basic_info->entry_size;
     }
+}
 
-    boot_info->ram_regions_count = ram_region_index;
+static void parse_command_line(const multiboot2_tag_boot_command_line_t* cmdline_tag, boot_info_t* boot_info) {
+    size_t length = kstrlen(cmdline_tag->command_line);
+    if (length >= BOOT_MAX_COMMAND_LINE_LENGTH) {
+        KPANIC("The command line is too long to fit in the boot info structure.", 0);
+    }
+
+    memcpy(boot_info->command_line, cmdline_tag->command_line, length);
+    boot_info->command_line[length] = '\0';
+}
+
+static void parse_module(const multiboot2_tag_module_t* modules_tag, boot_info_t* boot_info) {
+    if (boot_info->module_count >= BOOT_MAX_MODULES) {
+        KPANIC("Too many modules loaded. Maximum supported is %d.", BOOT_MAX_MODULES);
+    }
+
+    boot_module_t* module = &boot_info->modules[boot_info->module_count++];
+    module->mod_start = modules_tag->mod_start;
+    module->mod_end = modules_tag->mod_end;
+
+    size_t cmdline_length = kstrlen(modules_tag->cmdline);
+    if (cmdline_length >= BOOT_MAX_COMMAND_LINE_LENGTH) {
+        KPANIC("Module command line is too long to fit in the boot info structure.", 0);
+    }
+
+    memcpy(module->command_line, modules_tag->cmdline, cmdline_length);
+    module->command_line[cmdline_length] = '\0';
 }
 
 void multiboot2_parse_boot_info(const multiboot2_info_t* mb2_info, boot_info_t* boot_info) {
@@ -37,18 +65,26 @@ void multiboot2_parse_boot_info(const multiboot2_info_t* mb2_info, boot_info_t* 
                 parse_memory_map((multiboot2_tag_memory_map_t*)tag, boot_info);
                 break;
             }
+            case MULTIBOOT2_TAG_BOOT_COMMAND_LINE: {
+                parse_command_line((multiboot2_tag_boot_command_line_t*)tag, boot_info);
+                break;
+            }
+            case MULTIBOOT2_TAG_MODULE: {
+                parse_module((multiboot2_tag_module_t*)tag, boot_info);
+                break;
+            }
         }
 
         tag = (void*)((uint8_t*)tag + ((tag->size + 7) & ~7));
     }
 }
 
-void multiboot2_ram_size(const boot_info_t* boot_info, uint64_t* total_ram_size) {
+uint64_t multiboot2_memory_map_size(const boot_memory_map_t* memory_map) {
     uint64_t total_size = 0;
 
-    for (uint32_t index = 0; index < boot_info->ram_regions_count; index++) {
-        total_size += boot_info->ram_regions[index].length;
+    for (uint32_t index = 0; index < memory_map->count; index++) {
+        total_size += memory_map->regions[index].length;
     }
 
-    *total_ram_size = total_size;
+    return total_size;
 }

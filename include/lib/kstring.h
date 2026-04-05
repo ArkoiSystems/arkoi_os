@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-uint32_t strlen(const char* input);
+uint32_t kstrlen(const char* input);
 
 #endif // KSTRING_HPP

@@ -78,7 +78,7 @@ uint32_t vsnprintf(char* buffer, const uint32_t size, const char* format, va_lis
         // Ensures that there is always room for the amount of character to write and a null terminator.
 #define ENOUGH_SLOTS_FREE(amount) ((position + amount) < (size - 1))
 
-    const uint32_t format_length = strlen(format);
+    const uint32_t format_length = kstrlen(format);
     uint32_t position = 0;
 
     for (uint32_t index = 0; index < format_length; index++) {
@@ -120,7 +120,9 @@ uint32_t vsnprintf(char* buffer, const uint32_t size, const char* format, va_lis
                 const char* value = va_arg(args, char*);
                 if (value == NULL) value = "(null)";
 
-                const uint32_t length = strlen(value);
+                const uint32_t length = kstrlen(value);
+                if (length == 0) break;
+
                 if (!ENOUGH_SLOTS_FREE(length)) goto cleanup;
 
                 const size_t written = write_buffer(&buffer[position], (size - position), value, length);
