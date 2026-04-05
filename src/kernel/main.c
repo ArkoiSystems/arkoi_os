@@ -21,9 +21,28 @@
 void kernel_main(multiboot2_info_t* mb2_info) {
     vga_initialize();
 
+    kprintf(
+        "Early allocator start at %x with a size of %d KB\n", SYMBOL_START(early_heap), SYMBOL_SIZE(early_heap) / 1024);
+
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
     multiboot2_print_boot_info(&boot_info);
+
+    if (!pmm_init_from_memory_map(boot_info.ram_regions)) {
+        KPANIC("Failed to initialize PMM from Multiboot2 RAM regions", 0);
+    }
+
+    void* address_1 = pmm_alloc_page(2);
+    kprintf("(1) Allocated 2 pages at address %x\n", address_1);
+
+    void* address_2 = pmm_alloc_page(3);
+    kprintf("(2) Allocated 3 pages at address %x\n", address_2);
+
+    void* address_3 = pmm_alloc_page(2);
+    kprintf("(3) Allocated 2 pages at address %x\n", address_3);
+
+    void* address_4 = pmm_alloc_page(2);
+    kprintf("(4) Allocated 2 pages at address %x\n", address_4);
 
     while (1);
 }
