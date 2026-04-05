@@ -22,3 +22,11 @@ void kmemset(void* destination, uint8_t value, uint32_t size) {
         dest++;
     }
 }
+
+uintptr_t kalign_up(const uintptr_t value, const uintptr_t alignment) {
+    return (value + alignment - 1U) & ~(alignment - 1U);
+}
+
+uintptr_t kalign_down(const uintptr_t value, const uintptr_t alignment) {
+    return value & ~(alignment - 1U);
+}
