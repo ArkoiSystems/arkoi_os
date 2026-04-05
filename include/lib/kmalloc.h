@@ -5,19 +5,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "lib/kassert.h"
+#define MAX_ORDER (20U)                        // 2^20 = 1048576 bytes (1 MiB)
+#define MIN_ORDER (12U)                        // 2^12 = 4096 bytes (4 KiB, the size of a page)
+#define REL_ORDER(order) ((order) - MIN_ORDER) // Convert an order to an index in the free lists array
+#define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1) // Total number of orders we support
 
-#define MAX_ORDER (20U) // 2^20 = 1048576 bytes (1 MiB)
-#define MIN_ORDER (10U) // 2^10 = 1024 bytes
+#define BLOCK_SIZE(order) (1U << (order)) // Calculate the block size for a given order (2^order)
 
-typedef struct block {
-    struct block* next;
+typedef struct block_meta {
+    struct block_meta* next;
+    uintptr_t address;
     uint8_t order;
     bool is_free;
-} block_t;
-
-STATIC_ASSERT((sizeof(block_t) & (sizeof(block_t) - 1)) == 0, BLOCK_HEADER_SIZE_MUST_BE_POWER_OF_2);
-STATIC_ASSERT((sizeof(block_t) == 8), BLOCK_HEADER_SIZE_MUST_BE_8_BYTES);
+    bool is_present;
+} block_meta_t;
 
 void kmalloc_init();
 

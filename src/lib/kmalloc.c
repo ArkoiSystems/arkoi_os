@@ -2,26 +2,23 @@
 
 #include <stdint.h>
 
+#include "lib/early_alloc.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
 #include "lib/ksymbols.h"
 
-#define REL_ORDER(order) ((order) - MIN_ORDER) // Convert an order to an index in the free lists array
-#define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1) // Total number of orders we support
+#define FREE_LISTS(order) (free_lists[REL_ORDER(order)])
+static block_meta_t* free_lists[NUM_ORDERS];
 
-static block_t* free_lists[NUM_ORDERS];
-
-#define FREE_LISTS(order) (free_lists[REL_ORDER(order)]) // Access the free list for a given order
-#define BLOCK_SIZE(order) (1U << (order))                // Calculate the block size for a given order (2^order)
+static block_meta_t* block_table;
+static size_t block_table_len;
 
 static bool size_to_order(const size_t size, size_t* result) {
     size_t order = MIN_ORDER;
     size_t block_size = BLOCK_SIZE(order);
 
-    // We need to account for the size of the block header (block_t) when determining the required order
-    size_t required_size = size + sizeof(block_t);
-    // Find the smallest order such that the block size can accommodate the requested size plus the block header
-    while (block_size < required_size && order <= MAX_ORDER) {
+    // Find the smallest order such that the block size can accommodate the requested size.
+    while (block_size < size && order <= MAX_ORDER) {
         order++;
         block_size <<= 1;
     }
@@ -34,74 +31,114 @@ static bool size_to_order(const size_t size, size_t* result) {
     return true;
 }
 
-static block_t* get_buddy(const block_t* block, const size_t order) {
-    uintptr_t block_address = (uintptr_t)block;
+static size_t block_index_from_address(const uintptr_t address) {
+    if (address < SYMBOL_START(heap) || address >= SYMBOL_END(heap)) {
+        KPANIC("Block address %x is outside of heap bounds", address);
+    }
 
-    // Calculate the buddy's address by XORing the block's address with the size of the block for the given order
-    uintptr_t buddy_address = block_address ^ BLOCK_SIZE(order);
+    if ((address & (BLOCK_SIZE(MIN_ORDER) - 1U)) != 0U) {
+        KPANIC("Block address %x is not page aligned", address);
+    }
+
+    uintptr_t offset = address - SYMBOL_START(heap);
+    return (size_t)(offset >> MIN_ORDER);
+}
+
+static block_meta_t* block_meta_from_address(const uintptr_t address) {
+    size_t index = block_index_from_address(address);
+
+    if (index >= block_table_len) {
+        KPANIC("Block index %d from address %x exceeds block table length %d", index, address, block_table_len);
+    }
+
+    return &block_table[index];
+}
+
+static block_meta_t* get_buddy(const block_meta_t* block, const size_t order) {
+    // Calculate the buddy's address by XORing the block's address with the size of the block for the given order.
+    uintptr_t buddy_address = block->address ^ BLOCK_SIZE(order);
     if (buddy_address < SYMBOL_START(heap) || buddy_address >= SYMBOL_END(heap)) {
         KPANIC("Calculated buddy address %x is outside of heap bounds", buddy_address);
     }
 
-    return (block_t*)buddy_address;
+    return block_meta_from_address(buddy_address);
 }
 
-static block_t** find_block_slot(block_t** head, block_t* target) {
-    // Traverse the linked list starting from head to find the target block
+static block_meta_t** find_block_slot(block_meta_t** head, block_meta_t* target) {
     while (*head && *head != target) {
         head = &(*head)->next;
     }
 
-    // Return a pointer to the pointer that references the target block (might be null if not found)
     return head;
 }
 
-static void remove_from_list(block_t* block, const int order) {
-    // Traverse the free list of the given order to find and remove the specified block
-    block_t** head = &FREE_LISTS(order);
-    block_t** slot = find_block_slot(head, block);
+static void remove_from_list(block_meta_t* block, const int order) {
+    block_meta_t** head = &FREE_LISTS(order);
+    block_meta_t** slot = find_block_slot(head, block);
 
-    // If the block is not found in the free list, this indicates a serious error in the allocator's state
     if (*slot == NULL) {
-        KPANIC("Block %x not found in free list for order %d", block, order);
+        KPANIC("Block %x not found in free list for order %d", block->address, order);
     }
 
-    // Remove the block from the free list by updating the pointer to skip over it
     *slot = block->next;
+    block->next = NULL;
 }
 
-static void add_to_list(block_t* block, const int order) {
-    // Simple insertion at the head of the free list for the given order
+static void add_to_list(block_meta_t* block, const int order) {
     block->next = FREE_LISTS(order);
     FREE_LISTS(order) = block;
 }
 
 void kmalloc_init() {
-    // Ensure the heap size is large enough to accommodate at least one block of the maximum order
     if (SYMBOL_SIZE(heap) < BLOCK_SIZE(MAX_ORDER)) {
         KPANIC("Heap size %d is too small for allocator (min %d bytes)", SYMBOL_SIZE(heap), BLOCK_SIZE(MAX_ORDER));
     }
 
-    // Ensure the heap start address is properly aligned for the buddy allocator
-    if ((SYMBOL_START(heap) & (BLOCK_SIZE(MAX_ORDER) - 1)) != 0) {
+    if ((SYMBOL_START(heap) & (BLOCK_SIZE(MAX_ORDER) - 1U)) != 0U) {
         KPANIC("Heap with start address %x is not properly aligned for buddy allocator", SYMBOL_START(heap));
     }
 
-    // Initialize all free lists to NULL
+    if ((SYMBOL_SIZE(heap) & (BLOCK_SIZE(MIN_ORDER) - 1U)) != 0U) {
+        KPANIC("Heap size %d is not page aligned", SYMBOL_SIZE(heap));
+    }
+
+    if ((SYMBOL_SIZE(heap) & (BLOCK_SIZE(MAX_ORDER) - 1U)) != 0U) {
+        KPANIC("Heap size %d is not aligned to max-order blocks", SYMBOL_SIZE(heap));
+    }
+
+    block_table_len = (size_t)(SYMBOL_SIZE(heap) >> MIN_ORDER);
+    block_table = (block_meta_t*)early_alloc(block_table_len * sizeof(block_meta_t));
+
     for (size_t order = MIN_ORDER; order <= MAX_ORDER; order++) {
         FREE_LISTS(order) = NULL;
     }
 
-    // Create the initial block that represents the entire heap and add it to the free list for the maximum order
-    block_t* initial_block = (block_t*)SYMBOL_START(heap);
-    initial_block->order = MAX_ORDER;
-    initial_block->next = NULL;
-    initial_block->is_free = true;
-    FREE_LISTS(MAX_ORDER) = initial_block;
+    for (size_t i = 0; i < block_table_len; i++) {
+        block_table[i].next = NULL;
+        block_table[i].address = SYMBOL_START(heap) + (i << MIN_ORDER);
+        block_table[i].order = 0;
+        block_table[i].is_free = false;
+        block_table[i].is_present = false;
+    }
+
+    // Seed one max-order block for each max-order region in the heap.
+    size_t max_blocks = (size_t)(SYMBOL_SIZE(heap) >> MAX_ORDER);
+    for (size_t i = 0; i < max_blocks; i++) {
+        uintptr_t block_address = SYMBOL_START(heap) + ((uintptr_t)i << MAX_ORDER);
+        block_meta_t* block = block_meta_from_address(block_address);
+
+        block->order = MAX_ORDER;
+        block->is_free = true;
+        block->is_present = true;
+        add_to_list(block, MAX_ORDER);
+    }
 }
 
 void* kmalloc(size_t size) {
-    // Find the smallest order that can accommodate the requested size
+    if (size == 0) {
+        return NULL;
+    }
+
     size_t target_order = 0;
     if (!size_to_order(size, &target_order)) {
         KPANIC("Allocation size %d is too large to be handled by the buddy allocator", size);
@@ -124,62 +161,53 @@ void* kmalloc(size_t size) {
         return NULL;
     }
 
-    // Remove the block from the free list and split it down to the target order if necessary
-    block_t* target_block = FREE_LISTS(current_order);
-    remove_from_list(target_block, current_order);
+    block_meta_t* target_block = FREE_LISTS(current_order);
+    remove_from_list(target_block, (int)current_order);
 
     while (current_order > target_order) {
         current_order--;
 
-        // Split the block into two buddies
-        size_t buddy_size = BLOCK_SIZE(current_order);
-        block_t* buddy_block = (block_t*)((uintptr_t)target_block + buddy_size);
+        uintptr_t buddy_address = target_block->address + BLOCK_SIZE(current_order);
+        block_meta_t* buddy_block = block_meta_from_address(buddy_address);
 
-        // Mark the buddy block as free
+        target_block->order = (uint8_t)current_order;
+        target_block->is_present = true;
+
+        buddy_block->order = (uint8_t)current_order;
         buddy_block->is_free = true;
+        buddy_block->is_present = true;
+        buddy_block->next = NULL;
 
-        // Set the order for both the target block and the buddy block
-        target_block->order = current_order;
-        buddy_block->order = current_order;
-
-        // Add the buddy block to the free list for the current order
-        add_to_list(buddy_block, current_order);
+        add_to_list(buddy_block, (int)current_order);
     }
 
-    // Mark the target block as allocated
     target_block->is_free = false;
+    target_block->is_present = true;
+    target_block->next = NULL;
 
-    // Return a pointer to the usable memory area of the allocated block (after the block header)
-    uintptr_t block_address = (uintptr_t)target_block;
-    uintptr_t start_address = block_address + sizeof(block_t);
-
-    kprintf("Allocated block at %x with order %d for requested size %d\n", block_address, target_block->order, size);
-
-    return (void*)start_address;
+    return (void*)target_block->address;
 }
 
 void kfree(void* ptr) {
-    // If the pointer is NULL, we can simply ignore the free request as there is nothing to free
     if (ptr == NULL) {
         return;
     }
 
     uintptr_t start_address = (uintptr_t)ptr;
 
-    // Validate that the pointer is properly aligned
-    if (start_address & (sizeof(block_t) - 1)) {
+    if ((start_address & (BLOCK_SIZE(MIN_ORDER) - 1U)) != 0U) {
         KPANIC("Attempted to free a pointer %x that is not properly aligned", start_address);
     }
 
-    // Validate that the pointer is within the bounds of the heap
     if (start_address < SYMBOL_START(heap) || start_address >= SYMBOL_END(heap)) {
         KPANIC("Attempted to free a pointer %x that is outside of the heap bounds", start_address);
     }
 
-    // As the pointer returned by kmalloc points to the usable memory area (starts after the block header), we need
-    // to calculate the address of the block header
-    uintptr_t block_address = start_address - sizeof(block_t);
-    block_t* block = (block_t*)block_address;
+    block_meta_t* block = block_meta_from_address(start_address);
+
+    if (!block->is_present) {
+        KPANIC("Attempted to free pointer %x that does not reference a live allocation", start_address);
+    }
 
     if (block->order < MIN_ORDER || block->order > MAX_ORDER) {
         KPANIC("Attempted to free pointer %x with invalid block order %d", start_address, block->order);
@@ -194,27 +222,27 @@ void kfree(void* ptr) {
 
     size_t order = block->order;
     while (order < MAX_ORDER) {
-        // Calculate the buddy block for the current block and order
-        block_t* buddy_block = get_buddy(block, order);
+        block_meta_t* buddy_block = get_buddy(block, order);
 
-        // If the buddy block is not free or is of a different order, we cannot coalesce and must stop
-        if (!buddy_block->is_free || buddy_block->order != order) {
+        if (!buddy_block->is_present || !buddy_block->is_free || buddy_block->order != order) {
             break;
         }
 
-        // Remove the buddy block from the free list as we are going to coalesce it with the current block
-        remove_from_list(buddy_block, order);
+        remove_from_list(buddy_block, (int)order);
 
-        // Determine the lower address between the current block and its buddy to be the new block after coalescing
-        if (buddy_block < block) {
+        if (buddy_block->address < block->address) {
             block = buddy_block;
         }
 
-        // Increase the order of the coalesced block to reflect that it now represents a larger block of memory
+        buddy_block->is_present = false;
+        buddy_block->is_free = false;
+        buddy_block->next = NULL;
+
         order++;
-        block->order = order;
+        block->order = (uint8_t)order;
+        block->is_present = true;
+        block->is_free = true;
     }
 
-    // Add the (potentially coalesced) block back to the free list for its order
-    add_to_list(block, order);
+    add_to_list(block, (int)order);
 }
