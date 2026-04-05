@@ -95,8 +95,8 @@ set(LIB_SOURCES
     src/lib/kpanic.c
     src/lib/kstring.c
     src/lib/kmemory.c
-    src/lib/early_alloc.c
-    src/lib/pmm.c
+    src/lib/memory/emm.c
+    src/lib/memory/pmm.c
     src/lib/kbuffer.c
     src/lib/kio.c
 )

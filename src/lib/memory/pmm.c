@@ -1,11 +1,11 @@
-#include "lib/pmm.h"
+#include "lib/memory/pmm.h"
 
 #include <stdint.h>
 
-#include "lib/early_alloc.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
 #include "lib/ksymbols.h"
+#include "lib/memory/emm.h"
 
 #define FREE_LISTS(order) (free_lists[REL_ORDER(order)])
 static block_meta_t* free_lists[NUM_ORDERS];
@@ -107,7 +107,7 @@ void pmm_init() {
     }
 
     block_table_len = (size_t)(SYMBOL_SIZE(heap) >> MIN_ORDER);
-    block_table = (block_meta_t*)early_alloc(block_table_len * sizeof(block_meta_t));
+    block_table = (block_meta_t*)emm_alloc(block_table_len * sizeof(block_meta_t));
 
     for (size_t order = MIN_ORDER; order <= MAX_ORDER; order++) {
         FREE_LISTS(order) = NULL;

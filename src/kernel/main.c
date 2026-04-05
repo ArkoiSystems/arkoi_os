@@ -6,11 +6,11 @@
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/vga.h"
-#include "lib/early_alloc.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
 #include "lib/ksymbols.h"
-#include "lib/pmm.h"
+#include "lib/memory/emm.h"
+#include "lib/memory/pmm.h"
 
 #if defined(__linux__)
 #error "This kernel is not meant to be compiled on Linux!"

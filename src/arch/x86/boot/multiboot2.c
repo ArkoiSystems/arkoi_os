@@ -2,11 +2,11 @@
 
 #include <stdint.h>
 
-#include "lib/early_alloc.h"
 #include "lib/kmemory.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
 #include "lib/kstring.h"
+#include "lib/memory/emm.h"
 
 #define MULTIBOOT2_ALIGN_UP(x) (((x) + 7) & ~7)
 
@@ -21,7 +21,7 @@ static void parse_memory_map(const multiboot2_tag_memory_map_t* mb2_tag, boot_in
         uint64_t length = entry->length;
         uint32_t type = entry->type;
 
-        boot_memory_region_t* region = early_alloc(sizeof(boot_memory_region_t));
+        boot_memory_region_t* region = emm_alloc(sizeof(boot_memory_region_t));
         region->base_address = base;
         region->length = length;
         region->next = NULL;
@@ -49,14 +49,14 @@ static void parse_memory_map(const multiboot2_tag_memory_map_t* mb2_tag, boot_in
 
 static void parse_command_line(const multiboot2_tag_boot_command_line_t* mb2_tag, boot_info_t* boot_info) {
     size_t length = kstrlen(mb2_tag->command_line);
-    boot_info->command_line = early_alloc(length + 1U);
+    boot_info->command_line = emm_alloc(length + 1U);
 
     kmemcpy(boot_info->command_line, mb2_tag->command_line, length);
     boot_info->command_line[length] = '\0';
 }
 
 static void parse_module(const multiboot2_tag_module_t* mb2_tag, boot_info_t* boot_info) {
-    boot_module_t* module = early_alloc(sizeof(boot_module_t));
+    boot_module_t* module = emm_alloc(sizeof(boot_module_t));
     module->mod_start = mb2_tag->mod_start;
     module->mod_end = mb2_tag->mod_end;
     module->next = NULL;
@@ -68,7 +68,7 @@ static void parse_module(const multiboot2_tag_module_t* mb2_tag, boot_info_t* bo
     *slot = module;
 
     size_t cmdline_length = kstrlen(mb2_tag->command_line);
-    module->command_line = early_alloc(cmdline_length + 1U);
+    module->command_line = emm_alloc(cmdline_length + 1U);
 
     kmemcpy(module->command_line, mb2_tag->command_line, cmdline_length);
     module->command_line[cmdline_length] = '\0';
@@ -76,7 +76,7 @@ static void parse_module(const multiboot2_tag_module_t* mb2_tag, boot_info_t* bo
 
 static void parse_name(const multiboot2_tag_boot_loader_name_t* mb2_tag, boot_info_t* boot_info) {
     size_t name_length = kstrlen(mb2_tag->name);
-    boot_info->name = early_alloc(name_length + 1U);
+    boot_info->name = emm_alloc(name_length + 1U);
 
     kmemcpy(boot_info->name, mb2_tag->name, name_length);
     boot_info->name[name_length] = '\0';

@@ -1,4 +1,4 @@
-#include "lib/early_alloc.h"
+#include "lib/memory/emm.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -10,7 +10,7 @@
 static uintptr_t CURSOR = SYMBOL_START(early_heap);
 static uintptr_t END = SYMBOL_END(early_heap);
 
-void* early_alloc(size_t size) {
+void* emm_alloc(size_t size) {
     uintptr_t current_cursor = CURSOR;
     uintptr_t next_cursor = current_cursor + size;
 
