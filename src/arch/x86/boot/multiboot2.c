@@ -152,15 +152,18 @@ void multiboot2_print_boot_info(const boot_info_t* boot_info) {
         current_reserved = current_reserved->next;
     }
 
-    kprintf("There are %d modules loaded", boot_info->module_count);
-    for (size_t index = 0; index < boot_info->module_count; index++) {
-        boot_module_t* module = &boot_info->modules[index];
+    kprintf("There are %d modules loaded", multiboot2_module_count(boot_info->modules));
 
-        uint32_t start_address = module->mod_start;
-        uint32_t end_address = module->mod_end;
-        uint32_t size = module->mod_end - module->mod_start;
+    boot_module_t* current_module = boot_info->modules;
+    while (current_module != NULL) {
+        uint32_t start_address = current_module->mod_start;
+        uint32_t end_address = current_module->mod_end;
+        uint32_t size = current_module->mod_end - current_module->mod_start;
 
-        kprintf(" - Module %d: %x - %x (%d KB)\n", index, start_address, end_address, size / 1024);
+        kprintf(" - Module: %x - %x (%d KB)\n", start_address, end_address, size / 1024);
+        kprintf("   Command line: %s\n", current_module->command_line);
+
+        current_module = current_module->next;
     }
 }
 
@@ -180,6 +183,18 @@ uint32_t multiboot2_memory_map_count(const boot_memory_region_t* regions) {
     uint32_t count = 0;
 
     boot_memory_region_t* current = (boot_memory_region_t*)regions;
+    while (current != NULL) {
+        count++;
+        current = current->next;
+    }
+
+    return count;
+}
+
+uint32_t multiboot2_module_count(const boot_module_t* modules) {
+    uint32_t count = 0;
+
+    boot_module_t* current = (boot_module_t*)modules;
     while (current != NULL) {
         count++;
         current = current->next;

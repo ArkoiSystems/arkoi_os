@@ -122,7 +122,6 @@ typedef struct {
     boot_memory_region_t* ram_regions;
     boot_memory_region_t* reserved_regions;
     boot_module_t* modules;
-    uint32_t module_count;
 } boot_info_t;
 
 void multiboot2_parse_boot_info(const multiboot2_info_t* mb2_info, boot_info_t* boot_info);
@@ -132,5 +131,7 @@ void multiboot2_print_boot_info(const boot_info_t* boot_info);
 uint64_t multiboot2_memory_map_size(const boot_memory_region_t* regions);
 
 uint32_t multiboot2_memory_map_count(const boot_memory_region_t* regions);
+
+uint32_t multiboot2_module_count(const boot_module_t* modules);
 
 #endif // MULTIBOOT2_H
