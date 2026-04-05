@@ -40,6 +40,18 @@ void kernel_main(multiboot2_info_t* mb2_info) {
         kprintf(" - RAM Region %d: %x - %x (%d KB)\n", index, start_address, end_address, size);
     }
 
+    kprintf("There are %d reserved memory regions\n", boot_info.reserved.count);
+    for (size_t index = 0; index < boot_info.reserved.count; index++) {
+        boot_memory_region_t* region = &boot_info.reserved.regions[index];
+
+        // Cast the addresses to uint32_t as the kprintf doesnt support 64-bit values yet.
+        uint32_t start_address = region->base_address;
+        uint32_t end_address = region->base_address + region->length;
+        uint32_t size = region->length / 1024;
+
+        kprintf(" - Reserved Region %d: %x - %x (%d KB)\n", index, start_address, end_address, size);
+    }
+
     kprintf("There are %d modules loaded", boot_info.module_count);
     for (size_t index = 0; index < boot_info.module_count; index++) {
         boot_module_t* module = &boot_info.modules[index];

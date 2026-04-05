@@ -11,6 +11,7 @@
 #define MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME 2
 #define MULTIBOOT2_TAG_TYPE_MODULE 3
 #define MULTIBOOT2_TAG_TYPE_MEMORY_MAP 6
+#define MULTIBOOT2_TAG_TYPE_FRAMEBUFFER 8
 
 #define MULTIBOOT2_MEMORY_AVAILABLE 1
 #define MULTIBOOT2_MEMORY_RESERVED 2
@@ -20,7 +21,7 @@
 
 #define BOOT_MAX_NAME_LENGTH 256
 #define BOOT_MAX_COMMAND_LINE_LENGTH 256
-#define BOOT_MAX_MEMORY_REGIONS 8
+#define BOOT_MAX_MEMORY_REGIONS 32
 #define BOOT_MAX_MODULES 8
 
 typedef struct {
@@ -31,13 +32,13 @@ typedef struct {
 typedef struct {
     uint32_t type;
     uint32_t size;
-    char command_line[0];
+    char command_line[];
 } __attribute__((packed)) multiboot2_tag_boot_command_line_t;
 
 typedef struct {
     uint32_t type;
     uint32_t size;
-    char name[0];
+    char name[];
 } __attribute__((packed)) multiboot2_tag_boot_loader_name_t;
 
 typedef struct {
@@ -45,7 +46,7 @@ typedef struct {
     uint32_t size;
     uint32_t mod_start;
     uint32_t mod_end;
-    char command_line[0];
+    char command_line[];
 } __attribute__((packed)) multiboot2_tag_module_t;
 
 typedef struct {
@@ -60,13 +61,51 @@ typedef struct {
     uint32_t size;
     uint32_t entry_size;
     uint32_t entry_version;
-    multiboot2_memory_map_entry_t entries[0];
+    multiboot2_memory_map_entry_t entries[];
 } __attribute__((packed)) multiboot2_tag_memory_map_t;
+
+typedef struct {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} __attribute__((packed)) multiboot2_framebuffer_color_t;
+
+typedef struct {
+    uint32_t num_colors;
+    multiboot2_framebuffer_color_t colors[];
+} __attribute__((packed)) multiboot2_framebuffer_indexed_t;
+
+typedef struct {
+    uint8_t red_field_position;
+    uint8_t red_mask_size;
+    uint8_t green_field_position;
+    uint8_t green_mask_size;
+    uint8_t blue_field_position;
+    uint8_t blue_mask_size;
+} __attribute__((packed)) multiboot2_framebuffer_direct_t;
+
+typedef union {
+    multiboot2_framebuffer_indexed_t indexed;
+    multiboot2_framebuffer_direct_t direct;
+} __attribute__((packed)) multiboot2_framebuffer_color_info_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint64_t address;
+    uint32_t pitch;
+    uint32_t width;
+    uint32_t height;
+    uint8_t bpp;
+    uint8_t framebuffer_type;
+    uint16_t reserved;
+    multiboot2_framebuffer_color_info_t color_info;
+} __attribute__((packed)) multiboot2_tag_framebuffer_t;
 
 typedef struct {
     uint32_t total_size;
     uint32_t reserved;
-    multiboot2_tag_t tags[0];
+    multiboot2_tag_t tags[];
 } __attribute__((packed)) multiboot2_info_t;
 
 typedef struct {
@@ -89,6 +128,7 @@ typedef struct {
     char name[BOOT_MAX_NAME_LENGTH];
     char command_line[BOOT_MAX_COMMAND_LINE_LENGTH];
     boot_memory_map_t ram;
+    boot_memory_map_t reserved;
     boot_module_t modules[BOOT_MAX_MODULES];
     uint32_t module_count;
 } boot_info_t;

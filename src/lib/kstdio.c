@@ -16,7 +16,7 @@ static uint32_t write_buffer(char* buffer, const uint32_t size, const char* valu
     if (length >= size - 1) return 0;
 
     // Copy the message into the buffer.
-    memcpy(buffer, value, length);
+    kmemcpy(buffer, value, length);
 
     return length;
 }

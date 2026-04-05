@@ -27,7 +27,7 @@ void cyclic_buffer_push(cyclic_buffer_t* cb, void* source) {
     }
 
     void* destination = (uint8_t*)cb->buffer + (cb->head * cb->element_size);
-    memcpy(destination, source, cb->element_size);
+    kmemcpy(destination, source, cb->element_size);
 
     cb->head = (cb->head + 1) % cb->capacity;
 }
@@ -44,7 +44,7 @@ void cyclic_buffer_pop(cyclic_buffer_t* cb, void* destination) {
     }
 
     void* source = (uint8_t*)cb->buffer + (cb->tail * cb->element_size);
-    memcpy(destination, source, cb->element_size);
+    kmemcpy(destination, source, cb->element_size);
 
     cb->tail = (cb->tail + 1) % cb->capacity;
 }
