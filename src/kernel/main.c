@@ -1,4 +1,5 @@
 #include <stdint.h>
+
 #include "arch/x86/boot/multiboot2.h"
 #include "arch/x86/gdt/gdt.h"
 #include "arch/x86/idt/idt.h"
@@ -24,6 +25,7 @@ void kernel_main(multiboot2_info_t* mb2_info) {
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
 
+    kprintf("Booted using the \"%s\" boot loader\n", boot_info.name);
     kprintf("The command line is \"%s\"\n", boot_info.command_line);
 
     kprintf("RAM has a size of %d MB\n", multiboot2_memory_map_size(&boot_info.ram) / (1024 * 1024));
@@ -33,9 +35,9 @@ void kernel_main(multiboot2_info_t* mb2_info) {
         // Cast the addresses to uint32_t as the kprintf doesnt support 64-bit values yet.
         uint32_t start_address = region->base_address;
         uint32_t end_address = region->base_address + region->length;
-        uint32_t size = region->length / (1024 * 1024);
+        uint32_t size = region->length / 1024;
 
-        kprintf(" - RAM Region %d: %x - %x (%d MB)\n", index, start_address, end_address, size);
+        kprintf(" - RAM Region %d: %x - %x (%d KB)\n", index, start_address, end_address, size);
     }
 
     kprintf("There are %d modules loaded", boot_info.module_count);

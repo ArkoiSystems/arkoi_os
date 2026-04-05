@@ -18,7 +18,7 @@ static void parse_memory_map(const multiboot2_tag_memory_map_t* mb2_basic_info, 
         uint64_t length = entry->length;
         uint32_t type = entry->type;
 
-        if (type == MULTIBOOT2_MEMORY_MAP_RAM) {
+        if (type == MULTIBOOT2_MEMORY_AVAILABLE) {
             boot_info->ram.regions[boot_info->ram.count].base_address = base;
             boot_info->ram.regions[boot_info->ram.count].length = length;
             boot_info->ram.count++;
@@ -47,30 +47,44 @@ static void parse_module(const multiboot2_tag_module_t* modules_tag, boot_info_t
     module->mod_start = modules_tag->mod_start;
     module->mod_end = modules_tag->mod_end;
 
-    size_t cmdline_length = kstrlen(modules_tag->cmdline);
+    size_t cmdline_length = kstrlen(modules_tag->command_line);
     if (cmdline_length >= BOOT_MAX_COMMAND_LINE_LENGTH) {
         KPANIC("Module command line is too long to fit in the boot info structure.", 0);
     }
 
-    memcpy(module->command_line, modules_tag->cmdline, cmdline_length);
+    memcpy(module->command_line, modules_tag->command_line, cmdline_length);
     module->command_line[cmdline_length] = '\0';
+}
+
+static void parse_name(const multiboot2_tag_boot_loader_name_t* boot_loader_name_tag, boot_info_t* boot_info) {
+    size_t length = kstrlen(boot_loader_name_tag->name);
+    if (length >= BOOT_MAX_NAME_LENGTH) {
+        KPANIC("Boot loader name is too long to fit in the boot info structure.", 0);
+    }
+
+    memcpy(boot_info->name, boot_loader_name_tag->name, length);
+    boot_info->name[length] = '\0';
 }
 
 void multiboot2_parse_boot_info(const multiboot2_info_t* mb2_info, boot_info_t* boot_info) {
     multiboot2_tag_t* tag = (multiboot2_tag_t*)mb2_info->tags;
 
-    while (tag->type != MULTIBOOT2_TAG_END) {
+    while (tag->type != MULTIBOOT2_TAG_TYPE_END) {
         switch (tag->type) {
-            case MULTIBOOT2_TAG_MEMORY_MAP: {
+            case MULTIBOOT2_TAG_TYPE_MEMORY_MAP: {
                 parse_memory_map((multiboot2_tag_memory_map_t*)tag, boot_info);
                 break;
             }
-            case MULTIBOOT2_TAG_BOOT_COMMAND_LINE: {
+            case MULTIBOOT2_TAG_TYPE_COMMAND_LINE: {
                 parse_command_line((multiboot2_tag_boot_command_line_t*)tag, boot_info);
                 break;
             }
-            case MULTIBOOT2_TAG_MODULE: {
+            case MULTIBOOT2_TAG_TYPE_MODULE: {
                 parse_module((multiboot2_tag_module_t*)tag, boot_info);
+                break;
+            }
+            case MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME: {
+                parse_name((multiboot2_tag_boot_loader_name_t*)tag, boot_info);
                 break;
             }
         }
