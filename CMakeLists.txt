@@ -96,7 +96,7 @@ set(LIB_SOURCES
     src/lib/kstring.c
     src/lib/kmemory.c
     src/lib/early_alloc.c
-    src/lib/kmalloc.c
+    src/lib/pmm.c
     src/lib/kbuffer.c
     src/lib/kio.c
 )

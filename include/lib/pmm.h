@@ -1,5 +1,5 @@
-#ifndef KMALLOC_H
-#define KMALLOC_H
+#ifndef PMM_H
+#define PMM_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -26,4 +26,4 @@ void* pmm_alloc(size_t size);
 
 void pmm_free(void* ptr);
 
-#endif // KMALLOC_H
+#endif // PMM_H

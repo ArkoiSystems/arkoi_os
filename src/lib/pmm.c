@@ -1,4 +1,4 @@
-#include "lib/kmalloc.h"
+#include "lib/pmm.h"
 
 #include <stdint.h>
 
@@ -89,7 +89,7 @@ static void add_to_list(block_meta_t* block, const int order) {
     FREE_LISTS(order) = block;
 }
 
-void kmalloc_init() {
+void pmm_init() {
     if (SYMBOL_SIZE(heap) < BLOCK_SIZE(MAX_ORDER)) {
         KPANIC("Heap size %d is too small for allocator (min %d bytes)", SYMBOL_SIZE(heap), BLOCK_SIZE(MAX_ORDER));
     }
@@ -134,7 +134,7 @@ void kmalloc_init() {
     }
 }
 
-void* kmalloc(size_t size) {
+void* pmm_alloc(size_t size) {
     if (size == 0) {
         return NULL;
     }
@@ -188,7 +188,7 @@ void* kmalloc(size_t size) {
     return (void*)target_block->address;
 }
 
-void kfree(void* ptr) {
+void pmm_free(void* ptr) {
     if (ptr == NULL) {
         return;
     }
