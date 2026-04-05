@@ -152,7 +152,7 @@ void multiboot2_print_boot_info(const boot_info_t* boot_info) {
         current_reserved = current_reserved->next;
     }
 
-    kprintf("There are %d modules loaded", multiboot2_module_count(boot_info->modules));
+    kprintf("There are %d modules loaded\n", multiboot2_module_count(boot_info->modules));
 
     boot_module_t* current_module = boot_info->modules;
     while (current_module != NULL) {
