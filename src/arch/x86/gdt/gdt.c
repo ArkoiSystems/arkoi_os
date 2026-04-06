@@ -5,7 +5,7 @@
 static gdt_entry_t gdt_entries[GDT_SEGMENTS];
 static gdt_ptr_t gdt_ptr;
 
-void gdt_initialize() {
+void gdt_init() {
     gdt_ptr = gdt_create_ptr(GDT_SEGMENTS, (uint32_t)&gdt_entries);
 
     gdt_entries[0] = gdt_create_entry(0x00000000, 0x00000, 0);

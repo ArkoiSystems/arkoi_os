@@ -33,7 +33,7 @@ typedef enum {
  * It resets the text and background colors to a predefined default setting
  * and clears the screen to ensure a clean start for text rendering.
  */
-void vga_initialize(void);
+void vga_init(void);
 
 /**
  * @brief Sets the text and background color in the VGA text-mode buffer.

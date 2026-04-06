@@ -32,7 +32,7 @@ static void vga_scroll(void) {
     ROW = VGA_HEIGHT - 1;
 }
 
-void vga_initialize(void) {
+void vga_init(void) {
     vga_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     vga_clear();
 

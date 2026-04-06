@@ -63,7 +63,7 @@ void vmm_init_paging() {
     enable_paging();
 }
 
-void vmm_initialize() {
+void vmm_init() {
     // Paging is already enabled during early bootstrap in C.
     isr_install(EXCEPTION_PAGE_FAULT, &vmm_page_fault_handler);
 }

@@ -46,7 +46,7 @@ typedef struct {
 
 void vmm_init_paging();
 
-void vmm_initialize();
+void vmm_init();
 
 void vmm_page_fault_handler(const isr_frame_t* frame);
 

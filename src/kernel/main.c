@@ -20,14 +20,14 @@
 #endif
 
 void kernel_main(multiboot2_info_t* mb2_info) {
-    vga_initialize();
+    vga_init();
 
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
     multiboot2_print_boot_info(&boot_info);
 
     pmm_t pmm;
-    pmm_initialize(&pmm);
+    pmm_init(&pmm);
 
     boot_memory_region_t* current_ram = boot_info.ram_regions;
     while (current_ram != NULL) {
@@ -42,9 +42,9 @@ void kernel_main(multiboot2_info_t* mb2_info) {
     // Trigger a page fault for testing
     *(uintptr_t*)(8 * 1024 * 1024) = 100;
 
-    pit_initialize();
+    pit_init();
 
-    keyboard_initialize();
+    keyboard_init();
 
     while (1) {
         if (!keyboard_has_event()) {

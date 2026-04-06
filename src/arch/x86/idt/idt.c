@@ -49,7 +49,7 @@ static char* exception_messages[32] = { [EXCEPTION_DIVIDE_BY_ZERO] = "Division B
                                         [EXCEPTION_RESERVED_30] = "Reserved",
                                         [EXCEPTION_RESERVED_31] = "Reserved" };
 
-void idt_initialize() {
+void idt_init() {
     idt_ptr = idt_create_ptr(IDT_ENTRIES_AMOUNT, (uint32_t)&idt_entries);
 
     for (uint8_t vector = 0; vector < 32; vector++) {

@@ -34,7 +34,7 @@ typedef struct pmm {
     pmm_region_t* regions;
 } pmm_t;
 
-void pmm_initialize(pmm_t* pmm);
+void pmm_init(pmm_t* pmm);
 
 void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size);
 

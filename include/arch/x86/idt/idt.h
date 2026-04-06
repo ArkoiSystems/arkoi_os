@@ -83,7 +83,7 @@ typedef void (*irq_t)(const isr_frame_t* frame);
  * @note This function is expected to be called during early kernel startup
  *       before enabling interrupts.
  */
-void idt_initialize();
+void idt_init();
 
 /**
  * @brief Installs an interrupt service routine (ISR) handler.

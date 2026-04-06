@@ -131,7 +131,7 @@ static void add_to_region_freelist(pmm_block_t* block, pmm_region_t* region, con
     region->free_lists[order] = block;
 }
 
-void pmm_initialize(pmm_t* pmm) {
+void pmm_init(pmm_t* pmm) {
     pmm->regions = NULL;
 }
 

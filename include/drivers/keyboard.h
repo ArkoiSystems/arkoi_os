@@ -184,7 +184,7 @@ typedef struct {
     bool caps_locked;
 } keyboard_event_t;
 
-void keyboard_initialize();
+void keyboard_init();
 
 void keyboard_handler(const isr_frame_t* frame);
 

@@ -3,7 +3,7 @@
 
 #include "arch/x86/idt/idt.h"
 
-void pit_initialize();
+void pit_init();
 
 void pit_handler(const isr_frame_t* frame);
 

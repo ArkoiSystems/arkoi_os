@@ -55,11 +55,11 @@ higher_half_entry:
     call _init
 
     # Set up the GDT and IDT
-    call gdt_initialize
-    call idt_initialize
+    call gdt_init
+    call idt_init
 
     # Initialize the virtual memory manager (VMM)
-    call vmm_initialize
+    call vmm_init
 
     # Transfer control to the kernel and pass Multiboot2 info pointer as first arg
     push %esi

@@ -21,7 +21,7 @@ static void pit_set_frequency(uint32_t frequency) {
     outb(PIT_CHANNEL0_DATA_PORT, (divisor >> 8) & 0xFF);
 }
 
-void pit_initialize() {
+void pit_init() {
     irq_install(0, &pit_handler);
     pic_clear_mask(0);
 

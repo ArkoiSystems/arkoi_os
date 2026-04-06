@@ -29,7 +29,7 @@ static bool SHIFT_HELD = false;
 static bool CTRL_HELD = false;
 static bool ALT_HELD = false;
 
-void keyboard_initialize() {
+void keyboard_init() {
     cyclic_buffer_init(&KEYBOARD_BUFFER, KEYBOARD_EVENTS, KEYBOARD_BUFFER_SIZE, sizeof(KEYBOARD_EVENTS[0]));
 
     irq_install(1, &keyboard_handler);

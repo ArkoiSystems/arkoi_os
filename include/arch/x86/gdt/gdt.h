@@ -60,7 +60,7 @@ typedef struct {
  * @note This function is expected to be called early during kernel bootstrap
  *       before components that rely on proper segment configuration.
  */
-void gdt_initialize();
+void gdt_init();
 
 /**
  * @brief Creates a Global Descriptor Table (GDT) entry.
