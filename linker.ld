@@ -9,8 +9,12 @@ _kernel_physical_base = KERNEL_PHYSICAL_BASE;
 SECTIONS {
 	. = KERNEL_PHYSICAL_BASE;
 
-	.multiboot : ALIGN(4K) {
-		*(.multiboot)
+	.multiboot.data : ALIGN(4K) {
+		*(.multiboot.data)
+	}
+
+	.bootstrap.text : ALIGN(4K) {
+		*(.bootstrap.text)
 	}
 
 	. += KERNEL_VIRTUAL_BASE;

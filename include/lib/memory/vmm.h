@@ -44,6 +44,8 @@ typedef struct {
     uint32_t address : 20;       // Physical address of the page frame (first 20 bits, 4 KiB aligned)
 } __attribute__((packed)) pte_t;
 
+void vmm_init_paging();
+
 void vmm_initialize();
 
 void vmm_page_fault_handler(const isr_frame_t* frame);

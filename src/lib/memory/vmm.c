@@ -10,6 +10,13 @@
 #define PAGE_ENTRIES (1024U)
 #define PAGE_SIZE (4096U)
 
+static pde_t g_page_directories[PAGE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+static pte_t g_page_table[PAGE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+
+static uintptr_t virtual_to_physical(const uintptr_t virtual_address) {
+    return virtual_address - KERNEL_VIRTUAL_BASE;
+}
+
 static void enable_paging() {
     // Read CR0 to get current value
     uint32_t cr0;
@@ -22,27 +29,31 @@ static void enable_paging() {
     __asm__ volatile("mov %0, %%cr0" : : "r"(cr0));
 }
 
-static void load_page_directory(pde_t* pd_physical) {
+static void load_page_directory(const pde_t* pd_physical) {
     // Load the page directory physical address into CR3
     __asm__ volatile("mov %0, %%cr3" : : "r"(pd_physical));
 }
 
-void vmm_enable_paging(pde_t* page_directory, pte_t* page_table) {
-    kmemset(page_directory, 0, PAGE_ENTRIES * sizeof(pde_t));
-    kmemset(page_table, 0, PAGE_ENTRIES * sizeof(pte_t));
+void vmm_init_paging() {
+    pde_t* page_directory = (pde_t*)virtual_to_physical((uintptr_t)g_page_directories);
+    kmemset(page_directory, 0, sizeof(g_page_directories));
 
+    pte_t* page_table = (pte_t*)virtual_to_physical((uintptr_t)g_page_table);
+    kmemset(page_table, 0, sizeof(g_page_table));
+
+    // Identity map the first 4 MiB of memory for the kernel and boot region
     for (uint32_t index = 0; index < PAGE_ENTRIES; index++) {
         page_table[index].address = (index * PAGE_SIZE) >> 12;
         page_table[index].present = 1;
         page_table[index].rw = 1;
     }
 
-    // Identity map the first 4 MiB of memory for the kernel and boot region
+    // Set the first PDE to point to our page table for identity mapping
     page_directory[0].address = ((uintptr_t)page_table) >> 12;
     page_directory[0].present = 1;
     page_directory[0].rw = 1;
 
-    // Higher half mapping of low physical memory for the kernel
+    // Set the PDE for the kernel virtual base to point to the same page table as the first PDE (identity mapping)
     uint32_t pde_index = KERNEL_VIRTUAL_BASE >> 22;
     page_directory[pde_index].address = ((uintptr_t)page_table) >> 12;
     page_directory[pde_index].present = 1;
