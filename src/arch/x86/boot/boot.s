@@ -6,7 +6,7 @@
 .set MB2_BOOT_MAGIC,   0x36D76289
 
 # Declare a Multiboot2 header. The mandatory end tag has type=0, size=8.
-.section .multiboot
+.section .multiboot.data, "aw"
 .align 8
 .long MB2_MAGIC
 .long MB2_ARCH

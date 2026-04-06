@@ -4,9 +4,12 @@ SECTIONS {
 	. = 1M;
 	_kernel_start = .;
 
+	.multiboot.data : {
+		*(.multiboot.data)
+	}
+
 	.text BLOCK(4K) : ALIGN(4K) {
 		_text_start = .;
-		KEEP(*(.multiboot))
 		*(.text)
 		_text_end = .;
 	}
