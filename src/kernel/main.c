@@ -28,20 +28,29 @@ void kernel_main(multiboot2_info_t* mb2_info) {
     multiboot2_parse_boot_info(mb2_info, &boot_info);
     multiboot2_print_boot_info(&boot_info);
 
-    if (!pmm_init_from_memory_map(boot_info.ram_regions)) {
-        KPANIC("Failed to initialize PMM from Multiboot2 RAM regions", 0);
+    pmm_t pmm;
+    pmm_initialize(&pmm);
+
+    boot_memory_region_t* current_ram = boot_info.ram_regions;
+    while (current_ram != NULL) {
+        uintptr_t start = current_ram->base_address;
+        uintptr_t size = current_ram->length;
+
+        pmm_add_region(&pmm, start, size);
+
+        current_ram = current_ram->next;
     }
 
-    void* address_1 = pmm_alloc_page(2);
+    void* address_1 = pmm_alloc_order(&pmm, 2);
     kprintf("(1) Allocated 2 pages at address %x\n", address_1);
 
-    void* address_2 = pmm_alloc_page(3);
+    void* address_2 = pmm_alloc_order(&pmm, 3);
     kprintf("(2) Allocated 3 pages at address %x\n", address_2);
 
-    void* address_3 = pmm_alloc_page(2);
+    void* address_3 = pmm_alloc_order(&pmm, 2);
     kprintf("(3) Allocated 2 pages at address %x\n", address_3);
 
-    void* address_4 = pmm_alloc_page(2);
+    void* address_4 = pmm_alloc_order(&pmm, 2);
     kprintf("(4) Allocated 2 pages at address %x\n", address_4);
 
     while (1);
