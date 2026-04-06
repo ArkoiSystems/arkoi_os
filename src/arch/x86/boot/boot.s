@@ -6,7 +6,7 @@
 .set MB2_BOOT_MAGIC,   0x36D76289
 
 # Declare a Multiboot2 header. The mandatory end tag has type=0, size=8.
-.section .multiboot.data, "aw"
+.section .multiboot, "aw"
 .align 8
 .long MB2_MAGIC
 .long MB2_ARCH
@@ -16,12 +16,15 @@
 .short 0
 .long 8
 
-# Reserve a stack for the initial thread
+# Reserve early paging structures used before C runtime initialization
 .section .bss
-.align 16
-stack_bottom:
-.skip 4096 # 4 KiB
-stack_top:
+.align 4096
+boot_page_directory:
+.skip 4096 # 1 page directory
+
+.align 4096
+boot_page_table:
+.skip 4096 # 1 page table
 
 # The kernel entry point
 .section .text
@@ -29,13 +32,34 @@ stack_top:
 .global _start
 .type _start, @function
 _start:
-    mov $stack_top, %esp
-
     # Verify Multiboot2 handoff
     cmpl $MB2_BOOT_MAGIC, %eax
     jne hang
+
     # Preserve the pointer to the Multiboot2 info structure in %esi for later use
     mov %ebx, %esi
+
+    # Use a physical stack until higher-half paging is turned on.
+    mov $stack_top, %esp
+    sub $_kernel_virtual_base, %esp
+
+    # Bootstrap page tables in C (called through low alias before paging is enabled).
+    mov $boot_page_table, %eax
+    sub $_kernel_virtual_base, %eax
+    push %eax
+    mov $boot_page_directory, %eax
+    sub $_kernel_virtual_base, %eax
+    push %eax
+    mov $vmm_enable_paging, %eax
+    sub $_kernel_virtual_base, %eax
+    call *%eax
+    add $8, %esp
+
+    lea higher_half_entry, %eax
+    jmp *%eax
+
+higher_half_entry:
+    mov $stack_top, %esp
 
     # Call the global constructors
     call _init
@@ -44,7 +68,7 @@ _start:
     call gdt_initialize
     call idt_initialize
 
-    # Initialize the virtual memory manager (VMM) and set up identity paging
+    # Initialize the virtual memory manager (VMM)
     call vmm_initialize
 
     # Transfer control to the kernel and pass Multiboot2 info pointer as first arg

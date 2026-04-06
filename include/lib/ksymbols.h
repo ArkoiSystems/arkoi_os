@@ -7,6 +7,12 @@
 #define SYMBOL_END(name) ((uintptr_t) & _##name##_end)
 #define SYMBOL_SIZE(name) (SYMBOL_END(name) - SYMBOL_START(name))
 
+extern uintptr_t _kernel_physical_base;
+extern uintptr_t _kernel_virtual_base;
+
+#define KERNEL_PHYSICAL_BASE ((uintptr_t) & _kernel_physical_base)
+#define KERNEL_VIRTUAL_BASE ((uintptr_t) & _kernel_virtual_base)
+
 #define SYMBOL_DECLARE(name)                                                                                           \
     extern void* _##name##_start;                                                                                      \
     extern void* _##name##_end;
