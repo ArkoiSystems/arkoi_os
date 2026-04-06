@@ -8,6 +8,10 @@
 #include "lib/memory/emm.h"
 
 static bool size_to_order(const size_t size, uint8_t* result) {
+    if (result == NULL) {
+        return false;
+    }
+
     uint8_t current_order = 0U;
 
     size_t block_size = BLOCK_SIZE(current_order);
@@ -25,6 +29,10 @@ static bool size_to_order(const size_t size, uint8_t* result) {
 }
 
 static pmm_region_t* find_region_by_address(const pmm_t* pmm, const uintptr_t address) {
+    if (pmm == NULL) {
+        return NULL;
+    }
+
     pmm_region_t* current = pmm->regions;
     while (current) {
         if (address >= current->start && address < current->end) {
@@ -38,25 +46,33 @@ static pmm_region_t* find_region_by_address(const pmm_t* pmm, const uintptr_t ad
 }
 
 static pmm_block_t* find_block_by_address(const pmm_region_t* region, const uintptr_t address) {
+    if (region == NULL) {
+        return NULL;
+    }
+
     if (address < region->start || address >= region->end) {
-        KPANIC("Address is out of bounds for the region", 0);
+        return NULL;
     }
 
     if ((address & (PAGE_SIZE - 1U)) != 0U) {
-        KPANIC("Address %x is not aligned to page size", address);
+        return NULL;
     }
 
     uintptr_t offset = address - region->start;
     size_t block_index = offset / PAGE_SIZE;
 
     if (block_index >= region->block_pool_size) {
-        KPANIC("Calculated block index %d is out of bounds for the block pool", block_index);
+        return NULL;
     }
 
     return &region->block_pool[block_index];
 }
 
 static pmm_region_t* find_region_for_order(const pmm_t* pmm, const uint8_t order) {
+    if (pmm == NULL) {
+        return NULL;
+    }
+
     pmm_region_t* current = pmm->regions;
     while (current) {
         uint8_t current_order = order;
@@ -75,6 +91,10 @@ static pmm_region_t* find_region_for_order(const pmm_t* pmm, const uint8_t order
 }
 
 static pmm_block_t* get_buddy_block(const pmm_block_t* block, const pmm_region_t* region, const uint8_t order) {
+    if (block == NULL || region == NULL) {
+        return NULL;
+    }
+
     uintptr_t region_relative = block->address - region->start;
     uintptr_t buddy_relative = region_relative ^ BLOCK_SIZE(order);
     uintptr_t buddy_address = region->start + buddy_relative;
@@ -86,18 +106,24 @@ static pmm_block_t* get_buddy_block(const pmm_block_t* block, const pmm_region_t
     return find_block_by_address(region, buddy_address);
 }
 
-static void remove_from_region_freelist(pmm_block_t* block, pmm_region_t* region, const uint8_t order) {
+static bool remove_from_region_freelist(pmm_block_t* block, pmm_region_t* region, const uint8_t order) {
+    if (block == NULL || region == NULL) {
+        return false;
+    }
+
     pmm_block_t** slot = &region->free_lists[order];
     while (*slot && *slot != block) {
         slot = &(*slot)->next;
     }
 
     if (*slot == NULL) {
-        KPANIC("Block not found in free list for order %d", order);
+        return false;
     }
 
     *slot = block->next;
     block->next = NULL;
+
+    return true;
 }
 
 static void add_to_region_freelist(pmm_block_t* block, pmm_region_t* region, const uint8_t order) {
@@ -110,24 +136,37 @@ void pmm_initialize(pmm_t* pmm) {
 }
 
 void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size) {
-    start = kalign_up(start, PAGE_SIZE);
-
-    uintptr_t end = kalign_down(start + size, PAGE_SIZE);
-    if (end <= start) {
-        KPANIC("Invalid memory region with start %x and size %d", start, size);
+    if (pmm == NULL) {
+        KPANIC("Attempted to add memory region with a NULL pointer", 0);
     }
-    size = end - start;
+
+    uintptr_t original_start = start;
+    uintptr_t original_end = original_start + (uintptr_t)size;
+
+    if (original_start >= original_end) {
+        KPANIC("Memory region overflows address space (start=%x, size=%x)", original_start, size);
+    }
+
+    uintptr_t aligned_start = kalign_up(original_start, PAGE_SIZE);
+    uintptr_t aligned_end = kalign_down(original_end, PAGE_SIZE);
+
+    // Check if the aligned region is valid and can accommodate at least one block
+    if (aligned_end <= aligned_start) {
+        return;
+    }
+
+    size_t aligned_size = aligned_end - aligned_start;
 
     pmm_region_t* region = (pmm_region_t*)emm_alloc(sizeof(pmm_region_t));
-    region->start = start;
-    region->end = start + size;
+    region->start = aligned_start;
+    region->end = aligned_end;
     region->next = NULL;
 
     for (size_t index = 0; index < NUM_ORDERS; index++) {
         region->free_lists[index] = NULL;
     }
 
-    region->block_pool_size = size / PAGE_SIZE;
+    region->block_pool_size = aligned_size / PAGE_SIZE;
 
     size_t blockpool_size = region->block_pool_size * sizeof(pmm_block_t);
     region->block_pool = (pmm_block_t*)emm_alloc(blockpool_size);
@@ -199,11 +238,12 @@ void* pmm_alloc_order(pmm_t* pmm, const uint8_t order) {
 
     if (current_order > MAX_ORDER) {
         KPANIC("No blocks available for order %d or higher", order);
-        return NULL;
     }
 
     pmm_block_t* target_block = region->free_lists[current_order];
-    remove_from_region_freelist(target_block, region, current_order);
+    if (!remove_from_region_freelist(target_block, region, current_order)) {
+        KPANIC("Failed to remove block from free list", 0);
+    }
 
     target_block->is_free = false;
 
@@ -236,6 +276,10 @@ void* pmm_alloc_pages(pmm_t* pmm, size_t num_pages) {
         return NULL;
     }
 
+    if (num_pages > (SIZE_MAX / PAGE_SIZE)) {
+        KPANIC("Requested page count %x causes size overflow", num_pages);
+    }
+
     return pmm_alloc_size(pmm, num_pages * PAGE_SIZE);
 }
 
@@ -250,7 +294,7 @@ void* pmm_alloc_size(pmm_t* pmm, const size_t size) {
 
     uint8_t order;
     if (!size_to_order(size, &order)) {
-        KPANIC("Requested allocation size %d is too large to be handled by the buddy allocator", size);
+        KPANIC("Requested allocation size %x is too large to be handled by the buddy allocator", size);
     }
 
     return pmm_alloc_order(pmm, order);
@@ -272,7 +316,7 @@ void pmm_free(pmm_t* pmm, void* address) {
 
     pmm_region_t* region = find_region_by_address(pmm, start_address);
     if (!region) {
-        KPANIC("Attempted to free memory at address %x which does not belong to any region", address);
+        KPANIC("Attempted to free memory at address %x which does not belong to any region", start_address);
     }
 
     pmm_block_t* block = find_block_by_address(region, start_address);
@@ -305,7 +349,9 @@ void pmm_free(pmm_t* pmm, void* address) {
             break;
         }
 
-        remove_from_region_freelist(buddy_block, region, order);
+        if (!remove_from_region_freelist(buddy_block, region, order)) {
+            KPANIC("Failed to remove buddy block from free list during coalescing", 0);
+        }
 
         if (buddy_block->address < block->address) {
             block = buddy_block;
