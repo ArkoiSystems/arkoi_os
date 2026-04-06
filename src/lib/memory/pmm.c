@@ -200,8 +200,6 @@ void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size) {
         block->is_free = true;
         add_to_region_freelist(block, region, biggest_order);
 
-        kprintf("Seeding block at address %x with order %d to free list\n", address, biggest_order);
-
         offset += BLOCK_COUNT(biggest_order);
     }
 

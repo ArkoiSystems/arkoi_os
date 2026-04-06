@@ -40,6 +40,13 @@ _start:
     # Call the global constructors
     call _init
 
+    # Set up the GDT and IDT
+    call gdt_initialize
+    call idt_initialize
+
+    # Initialize the virtual memory manager (VMM) and set up identity paging
+    call vmm_initialize
+
     # Transfer control to the kernel and pass Multiboot2 info pointer as first arg
     push %esi
     call kernel_main

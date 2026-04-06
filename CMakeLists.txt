@@ -97,6 +97,7 @@ set(LIB_SOURCES
     src/lib/kmemory.c
     src/lib/memory/emm.c
     src/lib/memory/pmm.c
+    src/lib/memory/vmm.c
     src/lib/kbuffer.c
     src/lib/kio.c
 )

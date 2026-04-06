@@ -11,6 +11,7 @@
     extern void* _##name##_start;                                                                                      \
     extern void* _##name##_end;
 
+SYMBOL_DECLARE(kernel)
 SYMBOL_DECLARE(text)
 SYMBOL_DECLARE(rodata)
 SYMBOL_DECLARE(data)

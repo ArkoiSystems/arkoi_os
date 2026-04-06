@@ -77,18 +77,14 @@ void isr_handler(const isr_frame_t* frame) {
         KPANIC("Invalid ISR with interrupt number %d", frame->int_no);
     }
 
-    isr_exception_t exception = frame->int_no;
-    char* message = exception_messages[exception];
-
-    if (exception == EXCEPTION_PAGE_FAULT) {
-        kprintf("Page fault at address: %x\n", frame->cr2);
-    } else {
-        kprintf("Interrupt: %d (%s)\n", exception, message);
-    }
-
     isr_t handler = isr_handlers[frame->int_no];
     if (handler) {
         handler(frame);
+    } else {
+        isr_exception_t exception = frame->int_no;
+        char* message = exception_messages[exception];
+
+        kprintf("Interrupt: %d (%s)\n", exception, message);
     }
 
     __asm__ volatile("cli; hlt" ::: "memory");

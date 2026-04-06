@@ -11,6 +11,7 @@
 #include "lib/ksymbols.h"
 #include "lib/memory/emm.h"
 #include "lib/memory/pmm.h"
+#include "lib/memory/vmm.h"
 
 #if defined(__linux__)
 #error "This kernel is not meant to be compiled on Linux!"
@@ -20,9 +21,6 @@
 
 void kernel_main(multiboot2_info_t* mb2_info) {
     vga_initialize();
-
-    kprintf(
-        "Early allocator start at %x with a size of %d KB\n", SYMBOL_START(early_heap), SYMBOL_SIZE(early_heap) / 1024);
 
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
@@ -41,17 +39,33 @@ void kernel_main(multiboot2_info_t* mb2_info) {
         current_ram = current_ram->next;
     }
 
-    void* address_1 = pmm_alloc_order(&pmm, 2);
-    kprintf("(1) Allocated 2 pages at address %x\n", address_1);
+    // Trigger a page fault for testing
+    *(uintptr_t*)(8 * 1024 * 1024) = 100;
 
-    void* address_2 = pmm_alloc_order(&pmm, 3);
-    kprintf("(2) Allocated 3 pages at address %x\n", address_2);
+    pit_initialize();
 
-    void* address_3 = pmm_alloc_order(&pmm, 2);
-    kprintf("(3) Allocated 2 pages at address %x\n", address_3);
+    keyboard_initialize();
 
-    void* address_4 = pmm_alloc_order(&pmm, 2);
-    kprintf("(4) Allocated 2 pages at address %x\n", address_4);
+    while (1) {
+        if (!keyboard_has_event()) {
+            continue;
+        }
 
-    while (1);
+        keyboard_event_t event;
+        keyboard_get_event(&event);
+
+        if (!event.is_pressed) {
+            continue;
+        }
+
+        char ascii;
+
+        size_t result = keyboard_scancode_to_ascii(&event, &ascii);
+        if (result != 0) {
+            continue;
+        }
+
+        vga_set_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+        vga_put_char(ascii);
+    }
 }
