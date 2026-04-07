@@ -60,12 +60,12 @@ void kernel_main(multiboot2_info_t* mb2_info) {
 
         char ascii;
 
-        size_t result = keyboard_scancode_to_ascii(&event, &ascii);
-        if (result != 0) {
+        bool result = keyboard_scancode_to_ascii(&event, &ascii);
+        if (!result) {
             continue;
         }
 
         vga_set_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
-        vga_put_char(ascii);
+        vga_write_char(ascii);
     }
 }

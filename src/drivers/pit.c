@@ -12,7 +12,7 @@
 
 #define PIT_FREQUENCY 1000 // 1000 Hz (1 ms per tick)
 
-volatile uint32_t ticks = 0;
+volatile uint32_t g_ticks = 0;
 
 static void pit_set_frequency(uint32_t frequency) {
     uint32_t divisor = PIT_BASE_FREQUENCY / frequency;
@@ -29,10 +29,10 @@ void pit_init() {
 }
 
 void pit_handler([[maybe_unused]] const isr_frame_t* frame) {
-    ticks++;
+    g_ticks++;
 }
 
 void pit_wait(uint32_t milliseconds) {
-    uint32_t target_ticks = ticks + (milliseconds * PIT_FREQUENCY / 1000);
-    while (ticks < target_ticks);
+    uint32_t target_ticks = g_ticks + (milliseconds * PIT_FREQUENCY / 1000);
+    while (g_ticks < target_ticks);
 }

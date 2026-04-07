@@ -19,18 +19,18 @@
 #define PS2_STATUS_PORT 0x64
 #define PS2_STATUS_OUTPUT_BUFFER_FULL 0x01
 
-static keyboard_event_t KEYBOARD_EVENTS[KEYBOARD_BUFFER_SIZE];
-static cyclic_buffer_t KEYBOARD_BUFFER;
+static keyboard_event_t g_keyboard_events[KEYBOARD_BUFFER_SIZE];
+static cyclic_buffer_t g_keyboard_buffer;
 
-static bool EXTENDED_PENDING = false;
+static bool g_extended_pending = false;
 
-static bool CAPS_LOCKED = false;
-static bool SHIFT_HELD = false;
-static bool CTRL_HELD = false;
-static bool ALT_HELD = false;
+static bool g_caps_locked = false;
+static bool g_shift_held = false;
+static bool g_ctrl_held = false;
+static bool g_alt_held = false;
 
 void keyboard_init() {
-    cyclic_buffer_init(&KEYBOARD_BUFFER, KEYBOARD_EVENTS, KEYBOARD_BUFFER_SIZE, sizeof(KEYBOARD_EVENTS[0]));
+    cyclic_buffer_init(&g_keyboard_buffer, g_keyboard_events, KEYBOARD_BUFFER_SIZE, sizeof(g_keyboard_events[0]));
 
     irq_install(1, &keyboard_handler);
     pic_clear_mask(1);
@@ -45,24 +45,24 @@ static void handle_scancode(const uint16_t raw_scancode, bool extended) {
 
     const keyboard_scancode_t scancode = (keyboard_scancode_t)extended_scancode;
     if (scancode == SCANCODE_LEFT_SHIFT || scancode == SCANCODE_RIGHT_SHIFT) {
-        SHIFT_HELD = !is_released;
+        g_shift_held = !is_released;
     } else if (scancode == SCANCODE_LEFT_CTRL || scancode == SCANCODE_RIGHT_CTRL) {
-        CTRL_HELD = !is_released;
+        g_ctrl_held = !is_released;
     } else if (scancode == SCANCODE_LEFT_ALT || scancode == SCANCODE_RIGHT_ALT) {
-        ALT_HELD = !is_released;
+        g_alt_held = !is_released;
     } else if (scancode == SCANCODE_CAPS_LOCK && !is_released) {
-        CAPS_LOCKED = !CAPS_LOCKED;
+        g_caps_locked = !g_caps_locked;
     }
 
     keyboard_event_t event = { .keycode = keycode,
                                .scancode = scancode,
                                .is_pressed = !is_released,
-                               .shift_held = SHIFT_HELD,
-                               .ctrl_held = CTRL_HELD,
-                               .alt_held = ALT_HELD,
-                               .caps_locked = CAPS_LOCKED };
+                               .shift_held = g_shift_held,
+                               .ctrl_held = g_ctrl_held,
+                               .alt_held = g_alt_held,
+                               .caps_locked = g_caps_locked };
 
-    cyclic_buffer_push(&KEYBOARD_BUFFER, &event);
+    cyclic_buffer_push(&g_keyboard_buffer, &event);
 }
 
 void keyboard_handler([[maybe_unused]] const isr_frame_t* frame) {
@@ -70,33 +70,34 @@ void keyboard_handler([[maybe_unused]] const isr_frame_t* frame) {
         const uint8_t scancode = inb(PS2_DATA_PORT);
 
         if (scancode == EXTENDED_SCANCODE_PREFIX) {
-            EXTENDED_PENDING = true;
+            g_extended_pending = true;
             return;
         }
 
-        const bool extended = EXTENDED_PENDING;
-        EXTENDED_PENDING = false;
+        const bool extended = g_extended_pending;
+        g_extended_pending = false;
 
         handle_scancode(scancode, extended);
     }
 }
 
 bool keyboard_has_event() {
-    return !cyclic_buffer_is_empty(&KEYBOARD_BUFFER);
+    return !cyclic_buffer_is_empty(&g_keyboard_buffer);
 }
 
-void keyboard_get_event(keyboard_event_t* event) {
+bool keyboard_get_event(keyboard_event_t* event) {
     if (!keyboard_has_event()) {
         // TODO(tbd): Report error
-        return;
+        return false;
     }
 
-    cyclic_buffer_pop(&KEYBOARD_BUFFER, event);
+    cyclic_buffer_pop(&g_keyboard_buffer, event);
+    return true;
 }
 
-size_t keyboard_scancode_to_ascii(const keyboard_event_t* event, char* ascii) {
+bool keyboard_scancode_to_ascii(const keyboard_event_t* event, char* ascii) {
     if (event->scancode >= 128) {
-        return 1;
+        return false;
     }
 
     if (event->shift_held || event->caps_locked) {
@@ -105,5 +106,5 @@ size_t keyboard_scancode_to_ascii(const keyboard_event_t* event, char* ascii) {
         *ascii = SCANCODE_TO_ASCII[event->scancode];
     }
 
-    return (*ascii == 0);
+    return (*ascii != 0);
 }

@@ -2,19 +2,19 @@
 
 #include "lib/kstdio.h"
 
-static gdt_entry_t gdt_entries[GDT_SEGMENTS];
-static gdt_ptr_t gdt_ptr;
+static gdt_entry_t g_gdt_entries[GDT_SEGMENTS];
+static gdt_ptr_t g_gdt_ptr;
 
 void gdt_init() {
-    gdt_ptr = gdt_create_ptr(GDT_SEGMENTS, (uint32_t)&gdt_entries);
+    g_gdt_ptr = gdt_create_ptr(GDT_SEGMENTS, (uint32_t)&g_gdt_entries);
 
-    gdt_entries[0] = gdt_create_entry(0x00000000, 0x00000, 0);
-    gdt_entries[1] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_CODE_RING0 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
-    gdt_entries[2] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_DATA_RING0 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
-    gdt_entries[3] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_CODE_RING3 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
-    gdt_entries[4] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_DATA_RING3 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
+    g_gdt_entries[0] = gdt_create_entry(0x00000000, 0x00000, 0);
+    g_gdt_entries[1] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_CODE_RING0 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
+    g_gdt_entries[2] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_DATA_RING0 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
+    g_gdt_entries[3] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_CODE_RING3 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
+    g_gdt_entries[4] = gdt_create_entry(0x00000000, 0xFFFFF, GDT_DATA_RING3 | GDT_GRAN_4KB | GDT_GRAN_32BIT);
 
-    gdt_load(&gdt_ptr);
+    gdt_load(&g_gdt_ptr);
 }
 
 gdt_entry_t gdt_create_entry(const uint32_t base, const uint32_t limit, const uint16_t flags) {

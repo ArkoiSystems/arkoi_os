@@ -174,7 +174,7 @@ uint32_t kvprintf(const char* format, const va_list args) {
     char buffer[PRINTF_BUFFER_SIZE];
 
     const uint32_t written = vsnprintf(buffer, PRINTF_BUFFER_SIZE, format, args);
-    if (written != 0) vga_write(buffer);
+    if (written != 0) vga_write_string(buffer);
 
     return written;
 }

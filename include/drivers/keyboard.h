@@ -7,6 +7,14 @@
 #include "arch/x86/idt/idt.h"
 #include "lib/kbuffer.h"
 
+/**
+ * @brief An enumeration of keyboard scancodes based on the standard PC AT keyboard layout.
+ *
+ * Each scancode corresponds to a specific key on the keyboard. The scancodes are defined according to the standard set
+ * by the PC AT keyboard, which is widely used in x86 architecture. This enumeration includes scancodes for alphanumeric
+ * keys, function keys, modifier keys (Shift, Ctrl, Alt), and other special keys. The scancodes are used by the keyboard
+ * driver to identify which key was pressed or released when a keyboard event occurs.
+ */
 typedef enum {
     // Row 1
     SCANCODE_ESC = 0x0001,
@@ -112,6 +120,7 @@ typedef enum {
     SCANCODE_RIGHT_ALT = 0xE038,
 } keyboard_scancode_t;
 
+// This array maps scancodes to their corresponding ASCII characters when no modifiers are held.
 static const char SCANCODE_TO_ASCII[128] = {
     [SCANCODE_ESC] = 27,
 
@@ -147,6 +156,7 @@ static const char SCANCODE_TO_ASCII[128] = {
     [SCANCODE_KP_8] = '8',       [SCANCODE_KP_9] = '9',        [SCANCODE_KP_DOT] = '.',
 };
 
+// This array is used when Shift or Caps Lock is held to determine the correct ASCII character for a given scancode.
 static const char SCANCODE_TO_ASCII_SHIFT[128] = {
     [SCANCODE_1] = '!',         [SCANCODE_2] = '@',          [SCANCODE_3] = '#',     [SCANCODE_4] = '$',
     [SCANCODE_5] = '%',         [SCANCODE_6] = '^',          [SCANCODE_7] = '&',     [SCANCODE_8] = '*',
@@ -174,24 +184,83 @@ static const char SCANCODE_TO_ASCII_SHIFT[128] = {
     [SCANCODE_COMMA] = '<',     [SCANCODE_DOT] = '>',        [SCANCODE_SLASH] = '?',
 };
 
+/**
+ * @brief Represents a keyboard event, which can be either a key press or a key release.
+ *
+ * This structure encapsulates all the relevant information about a keyboard event, including the hardware keycode, the
+ * scancode, the state of modifier keys (Shift, Ctrl, Alt), and whether Caps Lock is active. It also indicates whether
+ * the event corresponds to a key press or a key release. This information is crucial for accurately interpreting the
+ * user's input and converting it to the appropriate ASCII characters or control sequences based on the current state of
+ * the keyboard.
+ */
 typedef struct {
-    uint8_t keycode;
-    keyboard_scancode_t scancode;
-    bool is_pressed;
-    bool shift_held;
-    bool ctrl_held;
-    bool alt_held;
-    bool caps_locked;
+    uint8_t keycode;              /**< A hardware keycode representing the physical key that was pressed or released. */
+    keyboard_scancode_t scancode; /**< The scancode corresponding to the key event */
+    bool is_pressed;              /**< A boolean indicating whether the key was pressed (true) or released (false). */
+    bool shift_held;              /**< A boolean indicating whether the Shift key is currently held down. */
+    bool ctrl_held;               /**< A boolean indicating whether the Ctrl key is currently held down. */
+    bool alt_held;                /**< A boolean indicating whether the Alt key is currently held down. */
+    bool caps_locked;             /**< A boolean indicating whether Caps Lock is currently active. */
 } keyboard_event_t;
 
+/**
+ * @brief Initializes the keyboard driver.
+ *
+ * This function sets up the necessary data structures and state for the keyboard driver to operate. It should be called
+ * during the kernel initialization process before any keyboard events are expected to be handled. The initialization
+ * may include setting up the internal buffer for keyboard events, initializing the state of modifier keys, and
+ * registering the keyboard interrupt handler with the appropriate interrupt vector in the IDT. After this function is
+ * called, the keyboard driver will be ready to capture and process keyboard events as they occur.
+ *
+ */
 void keyboard_init();
 
+/**
+ * @brief The keyboard interrupt handler.
+ *
+ * This function is called by the interrupt service routine (ISR) when a keyboard interrupt occurs. It reads the
+ * scancode from the keyboard controller, determines the key event (press or release), and pushes a `keyboard_event_t`
+ * into the internal buffer for later retrieval by other parts of the kernel. The handler also manages the state of
+ * modifier keys (Shift, Ctrl, Alt) and Caps Lock to ensure that the correct key events are generated.
+ *
+ * @param frame A pointer to the `isr_frame_t` structure containing the CPU state at the time of the interrupt.
+ */
 void keyboard_handler(const isr_frame_t* frame);
 
+/**
+ * @brief Checks if there are any pending keyboard events in the buffer.
+ *
+ * This function returns true if there is at least one keyboard event that has been captured and stored in the internal
+ * buffer, and false if the buffer is empty. It is typically used before calling `keyboard_get_event()` to ensure that
+ * there is an event to retrieve.
+ *
+ * @return bool Returns true if there is at least one keyboard event in the buffer, false otherwise.
+ */
 bool keyboard_has_event();
 
-void keyboard_get_event(keyboard_event_t* event);
+/**
+ * @brief Retrieves the next keyboard event from the buffer.
+ *
+ * This function should only be called if `keyboard_has_event()` returns true. It pops the next `keyboard_event_t` from
+ * the internal buffer and stores it in the provided `event` pointer.
+ *
+ * @param event A pointer to a `keyboard_event_t` where the retrieved event will be stored.
+ * @return bool Returns true if an event was successfully retrieved, false otherwise.
+ */
+bool keyboard_get_event(keyboard_event_t* event);
 
-size_t keyboard_scancode_to_ascii(const keyboard_event_t* event, char* ascii);
+/**
+ * @brief Converts a keyboard event to its corresponding ASCII character.
+ *
+ * This function takes into account the state of modifier keys (Shift, Ctrl, Alt) and Caps Lock to determine the correct
+ * ASCII character for the given keyboard event. It returns the ASCII character as a string, which may be one or more
+ * characters depending on the key and modifiers (e.g., Shift + '1' would return '!', while just '1' would return '1').
+ *
+ * @param event The `keyboard_event_t` to convert, which includes the scancode and the state of modifier keys.
+ * @param ascii A pointer to a char where the resulting ASCII character will be stored.
+ * @return bool Returns true if the conversion was successful and the scancode corresponds to a valid ASCII character,
+ *              false otherwise.
+ */
+bool keyboard_scancode_to_ascii(const keyboard_event_t* event, char* ascii);
 
 #endif // KEYBOARD_H

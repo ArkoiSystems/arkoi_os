@@ -143,8 +143,8 @@ irq_stub      13, 45
 irq_stub      14, 46
 irq_stub      15, 47
 
-.global isr_stub_table
-isr_stub_table:
+.global g_isr_stub_table
+g_isr_stub_table:
     .long isr_stub_0
     .long isr_stub_1
     .long isr_stub_2
@@ -178,8 +178,8 @@ isr_stub_table:
     .long isr_stub_30
     .long isr_stub_31
 
-.global irq_stub_table
-irq_stub_table:
+.global g_irq_stub_table
+g_irq_stub_table:
     .long irq_stub_0
     .long irq_stub_1
     .long irq_stub_2

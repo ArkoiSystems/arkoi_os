@@ -44,10 +44,39 @@ typedef struct {
     uint32_t address : 20;       // Physical address of the page frame (first 20 bits, 4 KiB aligned)
 } __attribute__((packed)) pte_t;
 
+/**
+ * @brief Initializes the paging system for the kernel.
+ *
+ * This function sets up the initial page directory and page tables to enable paging in the kernel. It typically
+ * performs the following steps:
+ * 1. Creates a page directory and initializes it to zero.
+ * 2. Creates a page table for the first 4 MiB of memory and identity maps it (virtual addresses map directly to
+ *    physical addresses).
+ * 3. Sets the appropriate entries in the page directory to point to the page table.
+ * 4. Loads the page directory into the CR3 register and enables paging by setting the PG bit in the CR0 register.
+ *
+ * This function should be called early in the kernel initialization process, before any code that relies on paging is
+ * executed.
+ */
 void vmm_init_paging();
 
+/**
+ * @brief Initializes the virtual memory manager (VMM) for the kernel.
+ *
+ * This function is responsible for setting up the virtual memory management system in the kernel.
+ */
 void vmm_init();
 
+/**
+ * @brief Handles a page fault exception.
+ *
+ * This function is called when a page fault occurs, which happens when the CPU tries to access a page that is not
+ * present in memory, or when there is a violation of the access permissions (e.g., writing to a read-only page). The
+ * handler should determine the cause of the page fault and take appropriate action, such as loading the required page
+ * into memory or terminating the offending process.
+ *
+ * @param frame A pointer to the interrupt frame containing the state of the CPU at the time of the page fault.
+ */
 void vmm_page_fault_handler(const isr_frame_t* frame);
 
 #endif // VMM_H
