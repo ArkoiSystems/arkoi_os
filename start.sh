@@ -9,4 +9,4 @@ if [ ! -f "$ISO_BIN" ]; then
 	exit 1
 fi
 
-exec qemu-system-i386 "$@" -no-shutdown -d int -cdrom "$ISO_BIN"
+exec qemu-system-i386 "$@" -no-shutdown -cdrom "$ISO_BIN" -serial stdio

@@ -88,6 +88,7 @@ set(DRIVER_SOURCES
     src/drivers/vga.c
     src/drivers/keyboard.c
     src/drivers/pit.c
+    src/drivers/serial.c
 )
 
 set(LIB_SOURCES

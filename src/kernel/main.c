@@ -5,6 +5,7 @@
 #include "arch/x86/idt/idt.h"
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
+#include "drivers/serial.h"
 #include "drivers/vga.h"
 #include "lib/kpanic.h"
 #include "lib/kstdio.h"
@@ -39,12 +40,15 @@ void kernel_main(multiboot2_info_t* mb2_info) {
         current_ram = current_ram->next;
     }
 
-    // Trigger a page fault for testing
-    *(uintptr_t*)(8 * 1024 * 1024) = 100;
-
     pit_init();
 
     keyboard_init();
+
+    serial_init_port(SERIAL_PORT_COM1, SERIAL_BAUD_115200);
+    serial_write_string(SERIAL_PORT_COM1, "Serial port COM1 initialized successfully!\n");
+
+    // Trigger a page fault for testing
+    *(uintptr_t*)(8 * 1024 * 1024) = 100;
 
     while (1) {
         if (!keyboard_has_event()) {

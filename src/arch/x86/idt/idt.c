@@ -82,7 +82,7 @@ void isr_handler(const isr_frame_t* frame) {
         handler(frame);
     } else {
         isr_exception_t exception = frame->int_no;
-        char* message = EXCEPTION_MESSAGES[exception];
+        const char* message = EXCEPTION_MESSAGES[exception];
 
         kprintf("Interrupt: %d (%s)\n", exception, message);
     }
