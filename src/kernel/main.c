@@ -44,7 +44,7 @@ void kernel_main(multiboot2_info_t* mb2_info) {
 
     keyboard_init();
 
-    serial_init_port(SERIAL_PORT_COM1, SERIAL_BAUD_115200);
+    serial_init_port(SERIAL_PORT_COM1, 115200U, SERIAL_DATA_BITS_8, SERIAL_PARITY_NONE, SERIAL_STOP_BITS_1);
     serial_write_string(SERIAL_PORT_COM1, "Serial port COM1 initialized successfully!\n");
 
     // Trigger a page fault for testing

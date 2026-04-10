@@ -1,128 +1,185 @@
 #include "drivers/serial.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 
-#include "arch/x86/idt/idt.h"
-#include "arch/x86/idt/pic.h"
-#include "lib/kbuffer.h"
 #include "lib/kio.h"
 #include "lib/kstring.h"
+#include "lib/memory/emm.h"
 
-#define SERIAL_BUFFER_SIZE 1024
+static serial_port_config_t* g_serial_ports = NULL;
 
-static bool g_com1_initialized = false;
-static char g_com1_buffer_data[SERIAL_BUFFER_SIZE];
-static cyclic_buffer_t g_com1_buffer;
+static serial_port_config_t** get_serial_slot(uint16_t port) {
+    serial_port_config_t** slot = &g_serial_ports;
 
-static bool g_com2_initialized = false;
-static char g_com2_buffer_data[SERIAL_BUFFER_SIZE];
-static cyclic_buffer_t g_com2_buffer;
-
-static bool serial_is_initialized(uint16_t port) {
-    if (port == SERIAL_PORT_COM1) return g_com1_initialized;
-    if (port == SERIAL_PORT_COM2) return g_com2_initialized;
-    return false;
-}
-
-static bool serial_received(uint16_t port) {
-    return inb(port + SERIAL_REG_LSR) & 1;
-}
-
-static char serial_receive(uint16_t port) {
-    return inb(port);
-}
-
-static bool is_transmit_empty(uint16_t port) {
-    return inb(port + SERIAL_REG_LSR) & 0x20;
-}
-
-static void com1_handler([[maybe_unused]] const isr_frame_t* frame) {
-    while (serial_received(SERIAL_PORT_COM1)) {
-        const char character = serial_receive(SERIAL_PORT_COM1);
-        cyclic_buffer_push(&g_com1_buffer, (void*)&character);
-    }
-}
-
-static void com2_handler([[maybe_unused]] const isr_frame_t* frame) {
-    while (serial_received(SERIAL_PORT_COM2)) {
-        const char character = serial_receive(SERIAL_PORT_COM2);
-        cyclic_buffer_push(&g_com2_buffer, (void*)&character);
-    }
-}
-
-bool serial_init_port(uint16_t port, serial_baud_t baud) {
-    if (port != SERIAL_PORT_COM1 && port != SERIAL_PORT_COM2) {
-        return false;
+    while (*slot) {
+        if ((*slot)->port == port) {
+            return slot;
+        }
+        slot = &(*slot)->next;
     }
 
-    outb(port + SERIAL_REG_IER, 0x00); // Disable all interrupts
-    outb(port + SERIAL_REG_LCR, 0x80); // Enable DLAB (set baud rate divisor)
+    return slot;
+}
 
-    // Set baud rate divisor
-    outb(port + SERIAL_REG_LSB, (uint8_t)(baud & 0xFF));
-    outb(port + SERIAL_REG_MSB, (uint8_t)((baud >> 8) & 0xFF));
+static serial_port_config_t* get_serial_port(uint16_t port) {
+    return *get_serial_slot(port);
+}
 
-    outb(port + SERIAL_REG_LCR, 0x03); // 8 bits, no parity, one stop bit
-    outb(port + SERIAL_REG_FCR, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
-    outb(port + SERIAL_REG_MCR, 0x0B); // IRQs enabled, RTS/DSR set
-    outb(port + SERIAL_REG_MCR, 0x1E); // Set in loopback mode to test the serial chip
+static bool set_serial_config(uint16_t port, uint32_t baudrate) {
+    serial_port_config_t** slot = get_serial_slot(port);
+    serial_port_config_t* config = *slot;
 
-    outb(port + 0, 0xAE);        // Test serial chip (send byte 0xAE and check if serial returns same byte)
-    if (inb(port + 0) != 0xAE) { // Check if serial is faulty (i.e: not same byte as sent)
-        return false;
+    if (config == NULL) {
+        config = (serial_port_config_t*)emm_alloc(sizeof(serial_port_config_t));
+        if (!config) {
+            return false;
+        }
+
+        config->next = NULL;
+        *slot = config;
     }
 
-    outb(port + SERIAL_REG_MCR, 0x0F); // Set normal operation mode
-    outb(port + SERIAL_REG_IER, 0x01); // Enable received data available interrupt
-
-    cyclic_buffer_t* buffer = (port == SERIAL_PORT_COM1) ? &g_com1_buffer : &g_com2_buffer;
-    char* buffer_data = (port == SERIAL_PORT_COM1) ? g_com1_buffer_data : g_com2_buffer_data;
-    cyclic_buffer_init(buffer, buffer_data, SERIAL_BUFFER_SIZE, sizeof(char));
-
-    uint8_t irq_id = (port == SERIAL_PORT_COM1) ? SERIAL_IRQ_COM1 : SERIAL_IRQ_COM2;
-    irq_t irq_handler = (port == SERIAL_PORT_COM1) ? &com1_handler : &com2_handler;
-    irq_install(irq_id, irq_handler);
-    pic_clear_mask(irq_id);
-
-    bool* initialized = (port == SERIAL_PORT_COM1) ? &g_com1_initialized : &g_com2_initialized;
-    *initialized = true;
+    config->port = port;
+    config->baudrate = baudrate;
 
     return true;
 }
 
-bool serial_get_char(uint16_t port, char* character) {
-    if (!serial_is_initialized(port)) {
+static bool serial_received(uint16_t port) {
+    return inb(port + SERIAL_REG_LSR) & SERIAL_LSR_DATA_READY;
+}
+
+static bool read_char(uint16_t port, char* character) {
+    while (!serial_received(port));
+
+    *character = inb(port + SERIAL_REG_DATA);
+    return true;
+}
+
+static void flush_fifo(uint16_t port) {
+    while (serial_received(port)) {
+        inb(port + SERIAL_REG_DATA);
+    }
+}
+
+static bool is_transmit_empty(uint16_t port) {
+    return inb(port + SERIAL_REG_LSR) & SERIAL_LSR_THR_EMPTY;
+}
+
+static bool write_char(uint16_t port, char character) {
+    while (!is_transmit_empty(port));
+
+    outb(port + SERIAL_REG_DATA, character);
+    return true;
+}
+
+bool serial_init_port(
+    uint16_t port, uint32_t baudrate, serial_data_bits_t data_bits, serial_parity_t parity,
+    serial_stop_bits_t stop_bits) {
+    uint16_t divisor = SERIAL_BASE_CLOCK / baudrate;
+
+    outb(port + SERIAL_REG_IER, 0x00); // Disable all interrupts
+
+    // Set baudrate using the calculated divisor
+    outb(port + SERIAL_REG_LCR, 0x80); // Enable DLAB (set baud rate divisor)
+    outb(port + SERIAL_REG_LSB, (uint8_t)(divisor & 0xFF));
+    outb(port + SERIAL_REG_MSB, (uint8_t)((divisor >> 8) & 0xFF));
+    outb(port + SERIAL_REG_LCR, 0x00); // Disable DLAB
+
+    uint8_t lcr_reg = 0x00;
+    lcr_reg |= (data_bits << SERIAL_LCR_DATA_SHIFT) & SERIAL_LCR_DATA_MASK;
+    lcr_reg |= (stop_bits << SERIAL_LCR_STOP_SHIFT) & SERIAL_LCR_STOP_MASK;
+    lcr_reg |= (parity << SERIAL_LCR_PARITY_SHIFT) & SERIAL_LCR_PARITY_MASK;
+    outb(port + SERIAL_REG_LCR, lcr_reg);
+
+    outb(port + SERIAL_REG_FCR, 0xC7); // Enable FIFO, clear receive and transmit buffers, set 14-byte threshold
+    outb(port + SERIAL_REG_MCR, 0x0B); // IRQs enabled, RTS/DSR set
+    outb(port + SERIAL_REG_MCR, 0x1E); // Set in loopback mode to test the serial chip
+
+    // Test the serial port by sending a byte and reading it back
+    flush_fifo(port);
+    char received_char;
+    write_char(port, 0x2A);
+    read_char(port, &received_char);
+
+    outb(port + SERIAL_REG_MCR, 0x0F); // Set normal operation mode
+
+    // If the received character matches the sent character, we can assume the port is working correctly and save
+    // the configuration.
+    if ((received_char == 0x2A) && set_serial_config(port, baudrate)) {
+        return true;
+    }
+
+    // If the test or configuration failed, reset the port to prevent issues.
+    outb(port + SERIAL_REG_MCR, 0x00); // Reset MCR
+
+    return false;
+}
+
+bool serial_read_char(uint16_t port, char* character) {
+    if (character == NULL) {
         return false;
     }
 
-    cyclic_buffer_t* buffer = (port == SERIAL_PORT_COM1) ? &g_com1_buffer : &g_com2_buffer;
-    if (cyclic_buffer_is_empty(buffer)) {
+    serial_port_config_t* config = get_serial_port(port);
+    if (!config) {
         return false;
     }
 
-    cyclic_buffer_pop(buffer, character);
+    return read_char(config->port, character);
+}
+
+bool serial_read_string(uint16_t port, char* buffer, size_t buffer_size) {
+    if (buffer == NULL || buffer_size == 0) {
+        return false;
+    }
+
+    serial_port_config_t* config = get_serial_port(port);
+    if (!config) {
+        return false;
+    }
+
+    for (size_t index = 0; index < buffer_size - 1; index++) {
+        if (!read_char(config->port, &buffer[index])) {
+            return false;
+        }
+
+        if (buffer[index] == '\n') {
+            buffer[index + 1] = '\0';
+            return true;
+        }
+    }
+
+    buffer[buffer_size - 1] = '\0';
     return true;
 }
 
 bool serial_write_char(uint16_t port, char character) {
-    if (!serial_is_initialized(port)) {
+    serial_port_config_t* config = get_serial_port(port);
+    if (!config) {
         return false;
     }
 
-    while (!is_transmit_empty(port));
-
-    outb(port, character);
-    return true;
+    return write_char(config->port, character);
 }
 
 bool serial_write_string(uint16_t port, const char* text) {
-    if (!serial_is_initialized(port)) {
+    if (text == NULL) {
         return false;
     }
 
-    for (size_t index = 0; index < kstrlen(text); index++) {
-        if (!serial_write_char(port, text[index])) {
+    serial_port_config_t* config = get_serial_port(port);
+    if (!config) {
+        return false;
+    }
+
+    size_t length = kstrlen(text);
+    if (length == 0) {
+        return true;
+    }
+
+    for (size_t index = 0; index < length; index++) {
+        if (!write_char(config->port, text[index])) {
             return false;
         }
     }
