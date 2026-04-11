@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ArkoiOS: Attach QEMU GDB (default 172.17.0.1:1234)",
+      "type": "cppdbg",
+      "request": "launch",
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
+      "program": "${workspaceFolder}/build/ArkoiOS.bin",
+      "cwd": "${workspaceFolder}",
+      "externalConsole": false,
+      "stopAtEntry": false,
+      "miDebuggerServerAddress": "172.17.0.1:1234",
+      "setupCommands": [
+        {
+          "description": "Set x86 architecture",
+          "text": "set architecture i386",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Pretty printing",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}

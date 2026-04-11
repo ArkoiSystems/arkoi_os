@@ -10,6 +10,11 @@
     "--query-driver=/opt/cross/bin/i686-elf-*"
   ],
 
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.autocomplete": "disabled",
+  "C_Cpp.errorSquiggles": "disabled",
+  "C_Cpp.formatting": "disabled",
+
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
 }
