@@ -84,10 +84,8 @@ void isr_handler(const isr_frame_t* frame) {
         isr_exception_t exception = frame->int_no;
         const char* message = EXCEPTION_MESSAGES[exception];
 
-        kprintf("Interrupt: %d (%s)\n", exception, message);
+        KPANIC("Unhandled exception: %d (%s)\n", exception, message);
     }
-
-    __asm__ volatile("cli; hlt" ::: "memory");
 }
 
 void irq_install(const uint8_t irq, const irq_t handler) {

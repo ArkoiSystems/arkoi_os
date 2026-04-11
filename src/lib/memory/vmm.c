@@ -4,6 +4,7 @@
 
 #include "arch/x86/idt/idt.h"
 #include "lib/kmemory.h"
+#include "lib/kpanic.h"
 #include "lib/kstdio.h"
 #include "lib/ksymbols.h"
 
@@ -90,4 +91,6 @@ void vmm_page_fault_handler(const isr_frame_t* frame) {
     kprintf("Error code: %x (reason: %s, mode: %s, access: %s)\n", error_code, reason, mode, access_type);
     kprintf("Instruction: %x\n", frame->eip);
     kprintf("========================================\n");
+
+    KPANIC("Unhandled page fault!");
 }
