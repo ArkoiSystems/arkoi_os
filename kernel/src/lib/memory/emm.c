@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "lib/kpanic.h"
-#include "lib/kstdio.h"
 #include "lib/ksymbols.h"
 
 static uintptr_t g_cursor = SYMBOL_START(early_heap);

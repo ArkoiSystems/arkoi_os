@@ -4,7 +4,6 @@
 
 #include "lib/kmemory.h"
 #include "lib/kpanic.h"
-#include "lib/kstdio.h"
 #include "lib/memory/emm.h"
 
 static bool size_to_order(const size_t size, uint8_t* result) {

@@ -1,7 +1,5 @@
 #include "arch/x86/gdt/gdt.h"
 
-#include "lib/kstdio.h"
-
 static gdt_entry_t g_gdt_entries[GDT_SEGMENTS];
 static gdt_ptr_t g_gdt_ptr;
 

@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include "arch/x86/idt/idt.h"
-#include "lib/kbuffer.h"
 
 /**
  * @brief An enumeration of keyboard scancodes based on the standard PC AT keyboard layout.

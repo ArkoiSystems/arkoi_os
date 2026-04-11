@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "arch/x86/boot/multiboot2.h"
-
 #define PAGE_SIZE (4096U)                               // 4 KiB, the size of a page (minimum block size)
 #define BLOCK_SIZE(order) ((1U << (order)) * PAGE_SIZE) // Block size for a given order (2^order * PAGE_SIZE)
 #define BLOCK_COUNT(order) (1U << (order))              // Number of blocks in a block of the given order

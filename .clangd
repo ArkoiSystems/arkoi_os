@@ -1,19 +1,15 @@
+If:
+  PathMatch: .*/kernel/.*
 CompileFlags:
-  CompilationDatabase: build
-  Add:
-    - -ffreestanding
-    - -nostdlib
-    - -m32
+  CompilationDatabase: kernel
+Diagnostics:
+  UnusedIncludes: None
 
 ---
-If:
-  PathMatch: tests/.*
-CompileFlags:
-  CompilationDatabase: build/host-tests
-  Remove:
-    - -ffreestanding
-    - -nostdlib
-    - -m32
 
+If:
+  PathMatch: .*/tests/.*
+CompileFlags:
+  CompilationDatabase: tests
 Diagnostics:
   UnusedIncludes: None

@@ -3,7 +3,6 @@
 
 #include "arch/x86/idt/pic.h"
 #include "lib/kio.h"
-#include "lib/kstdio.h"
 
 #define PIT_COMMAND_PORT 0x43
 #define PIT_CHANNEL0_DATA_PORT 0x40

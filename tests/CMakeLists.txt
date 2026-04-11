@@ -29,12 +29,12 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 add_library(arkoi_kernel_components STATIC
-    ../src/lib/kstring.c
-    ../src/lib/kmemory.c
+    ../kernel/src/lib/kstring.c
+    ../kernel/src/lib/kmemory.c
 )
 
 target_include_directories(arkoi_kernel_components
-    PUBLIC ../include
+    PUBLIC ../kernel/include
 )
 
 target_compile_options(arkoi_kernel_components

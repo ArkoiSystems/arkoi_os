@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include "lib/kmemory.h"
-#include "lib/kpanic.h"
 #include "lib/kstdio.h"
 #include "lib/kstring.h"
 #include "lib/memory/emm.h"

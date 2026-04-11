@@ -7,7 +7,7 @@
       "request": "launch",
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb-multiarch",
-      "program": "${workspaceFolder}/build/ArkoiOS.bin",
+      "program": "${workspaceFolder}/build/kernel/ArkoiOS.bin",
       "cwd": "${workspaceFolder}",
       "externalConsole": false,
       "stopAtEntry": false,
@@ -29,7 +29,7 @@
       "name": "ArkoiOS: Debug Hosted Unit Tests",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/host-tests/arkoi_kernel_unit_tests",
+      "program": "${workspaceFolder}/build/tests/arkoi_kernel_unit_tests",
       "args": [
         "--gtest_color=yes"
       ],

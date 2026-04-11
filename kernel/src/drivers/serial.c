@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include "lib/kio.h"
-#include "lib/kstdio.h"
 #include "lib/kstring.h"
 #include "lib/memory/emm.h"
 

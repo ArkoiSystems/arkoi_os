@@ -1,7 +1,6 @@
 #include "drivers/vga.h"
 
 #include "lib/kio.h"
-#include "lib/kstdio.h"
 
 static uint16_t* g_vga_memory = (uint16_t*)VGA_MEMORY_ADDRESS;
 

@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#include "lib/kbuffer.h"
-
 // Multiboot2 tag types
 #define MULTIBOOT2_TAG_ALIGN 8
 #define MULTIBOOT2_TAG_TYPE_END 0

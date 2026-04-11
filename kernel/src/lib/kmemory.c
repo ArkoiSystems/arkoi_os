@@ -1,4 +1,5 @@
 #include "lib/kmemory.h"
+
 #include <stdint.h>
 
 void* kmemcpy(void* destination, const void* source, uint32_t size) {

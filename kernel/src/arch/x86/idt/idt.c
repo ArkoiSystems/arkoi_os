@@ -3,7 +3,6 @@
 #include "arch/x86/gdt/gdt.h"
 #include "arch/x86/idt/pic.h"
 #include "lib/kpanic.h"
-#include "lib/kstdio.h"
 
 #define IDT_ENTRIES_AMOUNT 48
 

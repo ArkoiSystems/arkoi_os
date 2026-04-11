@@ -1,8 +1,7 @@
 {
   "cmake.configureOnOpen": true,
   "cmake.buildDirectory": "${workspaceFolder}/build",
-  "cmake.exportCompileCommandsFile": true,
-  "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
+
 
   "clangd.arguments": [
     "--background-index",
@@ -16,5 +15,5 @@
   "C_Cpp.formatting": "disabled",
 
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "xaver.clang-format",
+  "editor.defaultFormatter": "xaver.clang-format"
 }

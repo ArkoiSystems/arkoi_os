@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-ISO_BIN="${ISO_BIN:-build/ArkoiOS.iso}"
+ISO_BIN="${ISO_BIN:-build/kernel/ArkoiOS.iso}"
 
 if [ ! -f "$ISO_BIN" ]; then
 	echo "ISO not found at $ISO_BIN"
