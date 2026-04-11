@@ -152,3 +152,26 @@ add_custom_target(iso ALL
     COMMENT "Building bootable GRUB ISO: ${ISO_PATH}"
     VERBATIM
 )
+
+# =========================
+# Hosted Unit Tests (non-freestanding)
+# =========================
+option(ARKOI_ENABLE_HOST_TESTS "Enable host-side unit test targets" ON)
+
+if(ARKOI_ENABLE_HOST_TESTS)
+    set(ARKOI_HOST_TEST_BUILD_DIR "${CMAKE_BINARY_DIR}/host-tests")
+
+    find_program(HOST_CC gcc REQUIRED)
+    find_program(HOST_CXX g++ REQUIRED)
+
+    add_custom_target(host_tests
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${ARKOI_HOST_TEST_BUILD_DIR}"
+        COMMAND ${CMAKE_COMMAND} -S "${CMAKE_SOURCE_DIR}/tests" -B "${ARKOI_HOST_TEST_BUILD_DIR}" -G "${CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${HOST_CC} -DCMAKE_CXX_COMPILER=${HOST_CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ARKOI_HOST_TEST_BUILD_DIR}/compile_commands.json" "${CMAKE_SOURCE_DIR}/tests/compile_commands.json"
+        COMMAND ${CMAKE_COMMAND} --build "${ARKOI_HOST_TEST_BUILD_DIR}"
+        COMMAND ${CMAKE_CTEST_COMMAND} --test-dir "${ARKOI_HOST_TEST_BUILD_DIR}" --output-on-failure
+        USES_TERMINAL
+        COMMENT "Configure, build, and run hosted unit tests"
+        VERBATIM
+    )
+endif()

@@ -24,6 +24,22 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "ArkoiOS: Debug Hosted Unit Tests",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/host-tests/arkoi_kernel_unit_tests",
+      "args": [
+        "--gtest_color=yes"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "Build host tests"
     }
   ]
 }

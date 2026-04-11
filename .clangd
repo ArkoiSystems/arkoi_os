@@ -4,5 +4,16 @@ CompileFlags:
     - -ffreestanding
     - -nostdlib
     - -m32
+
+---
+If:
+  PathMatch: tests/.*
+CompileFlags:
+  CompilationDatabase: build/host-tests
+  Remove:
+    - -ffreestanding
+    - -nostdlib
+    - -m32
+
 Diagnostics:
   UnusedIncludes: None
