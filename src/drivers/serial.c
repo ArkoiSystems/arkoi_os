@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "lib/kio.h"
+#include "lib/kstdio.h"
 #include "lib/kstring.h"
 #include "lib/memory/emm.h"
 
@@ -48,27 +49,35 @@ static bool serial_received(uint16_t port) {
     return inb(port + SERIAL_REG_LSR) & SERIAL_LSR_DATA_READY;
 }
 
-static bool read_char(uint16_t port, char* character) {
-    while (!serial_received(port));
+static bool try_read_char(uint16_t port, char* character) {
+    if (!serial_received(port)) {
+        return false;
+    }
 
     *character = inb(port + SERIAL_REG_DATA);
     return true;
 }
 
-static void flush_fifo(uint16_t port) {
-    while (serial_received(port)) {
-        inb(port + SERIAL_REG_DATA);
-    }
+static bool read_char(uint16_t port, char* character) {
+    while (!try_read_char(port, character));
+    return true;
 }
 
 static bool is_transmit_empty(uint16_t port) {
     return inb(port + SERIAL_REG_LSR) & SERIAL_LSR_THR_EMPTY;
 }
 
-static bool write_char(uint16_t port, char character) {
-    while (!is_transmit_empty(port));
+static bool try_write_char(uint16_t port, char character) {
+    if (!is_transmit_empty(port)) {
+        return false;
+    }
 
     outb(port + SERIAL_REG_DATA, character);
+    return true;
+}
+
+static bool write_char(uint16_t port, char character) {
+    while (!try_write_char(port, character));
     return true;
 }
 
@@ -83,6 +92,11 @@ serial_port_t* serial_get_port(uint16_t port) {
     }
 
     return result;
+}
+
+void serial_init() {
+    serial_init_port(SERIAL_PORT_COM1, 115200, SERIAL_DATA_BITS_8, SERIAL_PARITY_NONE, SERIAL_STOP_BITS_1);
+    serial_init_port(SERIAL_PORT_COM2, 115200, SERIAL_DATA_BITS_8, SERIAL_PARITY_NONE, SERIAL_STOP_BITS_1);
 }
 
 serial_port_t* serial_init_port(
@@ -110,9 +124,15 @@ serial_port_t* serial_init_port(
 
     // Test the serial port by sending a byte and reading it back
     char received_char;
-    flush_fifo(port);
-    write_char(port, SERIAL_TEST_BYTE);
-    read_char(port, &received_char);
+    if (!try_write_char(port, SERIAL_TEST_BYTE)) {
+        outb(port + SERIAL_REG_MCR, 0x00); // Reset MCR
+        return NULL;
+    }
+
+    if (!try_read_char(port, &received_char)) {
+        outb(port + SERIAL_REG_MCR, 0x00); // Reset MCR
+        return NULL;
+    }
 
     if (received_char != SERIAL_TEST_BYTE) {
         // If the test failed, reset the port to prevent issues.

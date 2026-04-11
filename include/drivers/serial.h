@@ -110,6 +110,17 @@ typedef struct serial_port {
 } serial_port_t;
 
 /**
+ * @brief Initializes the serial communication system.
+ *
+ * This function initializes the serial communication system by setting up the necessary hardware registers for the
+ * configured serial ports. It typically initializes the standard COM1 and COM2 ports with default settings, allowing
+ * for immediate use of the serial ports for communication. The function may also perform tests to ensure that the
+ * serial ports are functioning correctly after initialization. Once initialized, the serial ports can be accessed and
+ * used for sending and receiving data through the defined API functions.
+ */
+void serial_init();
+
+/**
  * @brief Initializes a serial port with the given parameters.
  *
  * This function sets up the specified serial port with the provided baud rate, data bits, parity, and stop bits. It
