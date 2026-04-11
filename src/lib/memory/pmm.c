@@ -137,7 +137,7 @@ void pmm_init(pmm_t* pmm) {
 
 void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size) {
     if (pmm == NULL) {
-        KPANIC("Attempted to add memory region with a NULL pointer", 0);
+        KPANIC("Attempted to add memory region with a NULL pointer");
     }
 
     uintptr_t original_start = start;
@@ -213,7 +213,7 @@ void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size) {
 
 void* pmm_alloc_order(pmm_t* pmm, const uint8_t order) {
     if (pmm == NULL) {
-        KPANIC("Attempted to allocate memory with a NULL pointer", 0);
+        KPANIC("Attempted to allocate memory with a NULL pointer");
     }
 
     if (order > MAX_ORDER) {
@@ -240,7 +240,7 @@ void* pmm_alloc_order(pmm_t* pmm, const uint8_t order) {
 
     pmm_block_t* target_block = region->free_lists[current_order];
     if (!remove_from_region_freelist(target_block, region, current_order)) {
-        KPANIC("Failed to remove block from free list", 0);
+        KPANIC("Failed to remove block from free list");
     }
 
     target_block->is_free = false;
@@ -267,7 +267,7 @@ void* pmm_alloc_order(pmm_t* pmm, const uint8_t order) {
 
 void* pmm_alloc_pages(pmm_t* pmm, size_t num_pages) {
     if (pmm == NULL) {
-        KPANIC("Attempted to allocate memory with a NULL pointer", 0);
+        KPANIC("Attempted to allocate memory with a NULL pointer");
     }
 
     if (num_pages == 0) {
@@ -283,7 +283,7 @@ void* pmm_alloc_pages(pmm_t* pmm, size_t num_pages) {
 
 void* pmm_alloc_size(pmm_t* pmm, const size_t size) {
     if (pmm == NULL) {
-        KPANIC("Attempted to allocate memory with a NULL pointer", 0);
+        KPANIC("Attempted to allocate memory with a NULL pointer");
     }
 
     if (size == 0) {
@@ -300,7 +300,7 @@ void* pmm_alloc_size(pmm_t* pmm, const size_t size) {
 
 void pmm_free(pmm_t* pmm, void* address) {
     if (pmm == NULL) {
-        KPANIC("Attempted to free memory with invalid argument", 0);
+        KPANIC("Attempted to free memory with invalid argument");
     }
 
     if (address == NULL) {
@@ -348,7 +348,7 @@ void pmm_free(pmm_t* pmm, void* address) {
         }
 
         if (!remove_from_region_freelist(buddy_block, region, order)) {
-            KPANIC("Failed to remove buddy block from free list during coalescing", 0);
+            KPANIC("Failed to remove buddy block from free list during coalescing");
         }
 
         if (buddy_block->address < block->address) {

@@ -2,7 +2,7 @@
 #define KPANIC_H
 
 // A macro to simplify calling the kpanic function with file, line, and function information provided automatically.
-#define KPANIC(format, ...) kpanic(format, __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define KPANIC(format, ...) kpanic(format, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
 /**
  * @brief Kernel panic function, prints the message and halts the system.

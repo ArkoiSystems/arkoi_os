@@ -8,6 +8,7 @@
 #define STATIC_ASSERT(cond, msg) typedef char STATIC_ASSERTION_##msg[(cond) ? 1 : -1]
 
 #ifdef NDEBUG
+#define KASSERT_M(expression, message) (() 0)
 #define KASSERT(expression) (() 0)
 #else
 #define KASSERT_M(expression, message)                                                                                 \
