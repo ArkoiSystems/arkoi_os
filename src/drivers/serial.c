@@ -6,10 +6,13 @@
 #include "lib/kstring.h"
 #include "lib/memory/emm.h"
 
-static serial_port_config_t* g_serial_ports = NULL;
+#define SERIAL_TEST_BYTE 0x2A
 
-static serial_port_config_t** get_serial_slot(uint16_t port) {
-    serial_port_config_t** slot = &g_serial_ports;
+static serial_port_t* g_cached_lookup_result = NULL;
+static serial_port_t* g_serial_ports = NULL;
+
+static serial_port_t** get_serial_slot(uint16_t port) {
+    serial_port_t** slot = &g_serial_ports;
 
     while (*slot) {
         if ((*slot)->port == port) {
@@ -21,18 +24,14 @@ static serial_port_config_t** get_serial_slot(uint16_t port) {
     return slot;
 }
 
-static serial_port_config_t* get_serial_port(uint16_t port) {
-    return *get_serial_slot(port);
-}
-
-static bool set_serial_config(uint16_t port, uint32_t baudrate) {
-    serial_port_config_t** slot = get_serial_slot(port);
-    serial_port_config_t* config = *slot;
+static serial_port_t* upsert_serial_config(uint16_t port, uint32_t baudrate) {
+    serial_port_t** slot = get_serial_slot(port);
+    serial_port_t* config = *slot;
 
     if (config == NULL) {
-        config = (serial_port_config_t*)emm_alloc(sizeof(serial_port_config_t));
+        config = (serial_port_t*)emm_alloc(sizeof(serial_port_t));
         if (!config) {
-            return false;
+            return NULL;
         }
 
         config->next = NULL;
@@ -42,7 +41,7 @@ static bool set_serial_config(uint16_t port, uint32_t baudrate) {
     config->port = port;
     config->baudrate = baudrate;
 
-    return true;
+    return config;
 }
 
 static bool serial_received(uint16_t port) {
@@ -73,7 +72,20 @@ static bool write_char(uint16_t port, char character) {
     return true;
 }
 
-bool serial_init_port(
+serial_port_t* serial_get_port(uint16_t port) {
+    if (g_cached_lookup_result && g_cached_lookup_result->port == port) {
+        return g_cached_lookup_result;
+    }
+
+    serial_port_t* result = *get_serial_slot(port);
+    if (result) {
+        g_cached_lookup_result = result;
+    }
+
+    return result;
+}
+
+serial_port_t* serial_init_port(
     uint16_t port, uint32_t baudrate, serial_data_bits_t data_bits, serial_parity_t parity,
     serial_stop_bits_t stop_bits) {
     uint16_t divisor = SERIAL_BASE_CLOCK / baudrate;
@@ -97,50 +109,46 @@ bool serial_init_port(
     outb(port + SERIAL_REG_MCR, 0x1E); // Set in loopback mode to test the serial chip
 
     // Test the serial port by sending a byte and reading it back
-    flush_fifo(port);
     char received_char;
-    write_char(port, 0x2A);
+    flush_fifo(port);
+    write_char(port, SERIAL_TEST_BYTE);
     read_char(port, &received_char);
+
+    if (received_char != SERIAL_TEST_BYTE) {
+        // If the test failed, reset the port to prevent issues.
+        outb(port + SERIAL_REG_MCR, 0x00); // Reset MCR
+        return NULL;
+    }
 
     outb(port + SERIAL_REG_MCR, 0x0F); // Set normal operation mode
 
-    // If the received character matches the sent character, we can assume the port is working correctly and save
-    // the configuration.
-    if ((received_char == 0x2A) && set_serial_config(port, baudrate)) {
-        return true;
+    // Now that the port is configured and tested, we can store the configuration for later use.
+    serial_port_t* config = upsert_serial_config(port, baudrate);
+
+    if (config == NULL) {
+        // If the test failed, reset the port to prevent issues.
+        outb(port + SERIAL_REG_MCR, 0x00); // Reset MCR
+        return NULL;
     }
 
-    // If the test or configuration failed, reset the port to prevent issues.
-    outb(port + SERIAL_REG_MCR, 0x00); // Reset MCR
-
-    return false;
+    return config;
 }
 
-bool serial_read_char(uint16_t port, char* character) {
-    if (character == NULL) {
+bool serial_read_char(const serial_port_t* serial_port, char* character) {
+    if (serial_port == NULL || character == NULL) {
         return false;
     }
 
-    serial_port_config_t* config = get_serial_port(port);
-    if (!config) {
-        return false;
-    }
-
-    return read_char(config->port, character);
+    return read_char(serial_port->port, character);
 }
 
-bool serial_read_string(uint16_t port, char* buffer, size_t buffer_size) {
-    if (buffer == NULL || buffer_size == 0) {
-        return false;
-    }
-
-    serial_port_config_t* config = get_serial_port(port);
-    if (!config) {
+bool serial_read_string(const serial_port_t* serial_port, char* buffer, size_t buffer_size) {
+    if (serial_port == NULL || buffer == NULL || buffer_size == 0) {
         return false;
     }
 
     for (size_t index = 0; index < buffer_size - 1; index++) {
-        if (!read_char(config->port, &buffer[index])) {
+        if (!read_char(serial_port->port, &buffer[index])) {
             return false;
         }
 
@@ -154,22 +162,16 @@ bool serial_read_string(uint16_t port, char* buffer, size_t buffer_size) {
     return true;
 }
 
-bool serial_write_char(uint16_t port, char character) {
-    serial_port_config_t* config = get_serial_port(port);
-    if (!config) {
+bool serial_write_char(const serial_port_t* serial_port, char character) {
+    if (serial_port == NULL) {
         return false;
     }
 
-    return write_char(config->port, character);
+    return write_char(serial_port->port, character);
 }
 
-bool serial_write_string(uint16_t port, const char* text) {
-    if (text == NULL) {
-        return false;
-    }
-
-    serial_port_config_t* config = get_serial_port(port);
-    if (!config) {
+bool serial_write_string(const serial_port_t* serial_port, const char* text) {
+    if (serial_port == NULL || text == NULL) {
         return false;
     }
 
@@ -179,7 +181,7 @@ bool serial_write_string(uint16_t port, const char* text) {
     }
 
     for (size_t index = 0; index < length; index++) {
-        if (!write_char(config->port, text[index])) {
+        if (!write_char(serial_port->port, text[index])) {
             return false;
         }
     }
