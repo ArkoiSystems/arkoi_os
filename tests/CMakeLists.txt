@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(ArkoiOSHostTests LANGUAGES C CXX)
+project(arkoi_tests LANGUAGES C CXX)
 
 enable_testing()
 
@@ -16,6 +16,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 
+set(ARKOI_KERNEL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../kernel")
+
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
@@ -23,35 +25,30 @@ FetchContent_Declare(
 )
 
 set(INSTALL_GTEST OFF CACHE BOOL "Disable GoogleTest install")
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
-add_library(arkoi_kernel_components STATIC
-    ../kernel/src/lib/kstring.c
-    ../kernel/src/lib/kmemory.c
+add_executable(arkoi_tests
+    main.cpp
+    "${ARKOI_KERNEL_ROOT}/src/lib/kstring.c"
+    "${ARKOI_KERNEL_ROOT}/src/lib/kmemory.c"
 )
 
-target_include_directories(arkoi_kernel_components
-    PUBLIC ../kernel/include
+target_include_directories(arkoi_tests
+    PRIVATE "${ARKOI_KERNEL_ROOT}/include"
 )
 
-target_compile_options(arkoi_kernel_components
+target_compile_options(arkoi_tests
     PRIVATE
         -Wall
         -Wextra
         -Wpedantic
 )
 
-add_executable(arkoi_kernel_unit_tests
-    main.cpp
-)
-
-target_link_libraries(arkoi_kernel_unit_tests
+target_link_libraries(arkoi_tests
     PRIVATE
-        arkoi_kernel_components
         GTest::gtest_main
 )
 
-gtest_discover_tests(arkoi_kernel_unit_tests)
+gtest_discover_tests(arkoi_tests)

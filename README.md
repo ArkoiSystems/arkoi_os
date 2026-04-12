@@ -67,8 +67,8 @@ cmake --build build
 
 The build produces:
 
-- `build/ArkoiOS.bin` (kernel ELF/binary target)
-- `build/ArkoiOS.iso` (bootable GRUB ISO)
+- `build/arkoi_kernel.bin` (kernel ELF/binary target)
+- `build/arkoi_kernel.iso` (bootable GRUB ISO)
 
 ## Run
 
