@@ -30,9 +30,10 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 add_executable(arkoi_tests
-    main.cpp
+    src/kbuffer_tests.cpp
     "${ARKOI_KERNEL_ROOT}/src/lib/kstring.c"
     "${ARKOI_KERNEL_ROOT}/src/lib/kmemory.c"
+    "${ARKOI_KERNEL_ROOT}/src/lib/kbuffer.c"
 )
 
 target_include_directories(arkoi_tests

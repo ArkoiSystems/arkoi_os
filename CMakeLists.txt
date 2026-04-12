@@ -54,7 +54,7 @@ if(ARKOI_ENABLE_KERNEL)
 endif()
 
 if(ARKOI_ENABLE_TESTS)
-    ExternalProject_Add(host_tests
+    ExternalProject_Add(tests
         SOURCE_DIR "${CMAKE_SOURCE_DIR}/tests"
         BINARY_DIR "${ARKOI_TESTS_BUILD_DIR}"
         CMAKE_ARGS
@@ -67,10 +67,10 @@ if(ARKOI_ENABLE_TESTS)
     )
 
     copy_compile_commands(
-        host_tests
+        tests
         "${ARKOI_TESTS_BUILD_DIR}"
         "${CMAKE_SOURCE_DIR}/tests/compile_commands.json"
     )
     
-    add_dependencies(arkoi_workspace host_tests)
+    add_dependencies(arkoi_workspace tests)
 endif()

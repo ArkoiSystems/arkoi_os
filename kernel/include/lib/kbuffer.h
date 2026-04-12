@@ -30,8 +30,9 @@ typedef struct cyclic_buffer {
  * @param buffer       Pointer to the pre-allocated buffer memory that will be used for storing elements
  * @param capacity     Total number of elements that the buffer can hold
  * @param element_size Size of each element in bytes
+ * @return bool True if initialization was successful, false otherwise
  */
-void cyclic_buffer_init(cyclic_buffer_t* cb, void* buffer, size_t capacity, size_t element_size);
+bool cyclic_buffer_init(cyclic_buffer_t* cb, void* buffer, size_t capacity, size_t element_size);
 
 /**
  * @brief Pushes an element into the cyclic buffer.
@@ -41,8 +42,9 @@ void cyclic_buffer_init(cyclic_buffer_t* cb, void* buffer, size_t capacity, size
  *
  * @param cb     Pointer to the cyclic buffer structure
  * @param source Pointer to the element to be pushed into the buffer
+ * @return bool True if the element was successfully pushed, false otherwise
  */
-void cyclic_buffer_push(cyclic_buffer_t* cb, void* source);
+bool cyclic_buffer_push(cyclic_buffer_t* cb, void* source);
 
 /**
  * @brief Pops an element from the cyclic buffer.
@@ -52,8 +54,9 @@ void cyclic_buffer_push(cyclic_buffer_t* cb, void* source);
  *
  * @param cb          Pointer to the cyclic buffer structure
  * @param destination Pointer to the memory location where the popped element will be copied
+ * @return bool True if an element was successfully popped, false otherwise
  */
-void cyclic_buffer_pop(cyclic_buffer_t* cb, void* destination);
+bool cyclic_buffer_pop(cyclic_buffer_t* cb, void* destination);
 
 /**
  * @brief Returns the current number of elements in the cyclic buffer.

@@ -9,12 +9,25 @@
         "--build",
         "${workspaceFolder}/build",
         "--target",
-        "host_tests"
+        "tests"
       ],
       "group": "build",
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "Run host tests",
+      "type": "shell",
+      "command": "ctest",
+      "args": [
+        "--test-dir",
+        "${workspaceFolder}/build/tests",
+        "--output-on-failure"
+      ],
+      "dependsOn": "Build host tests",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     }
   ]
 }
