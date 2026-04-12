@@ -34,7 +34,7 @@ _start:
     sub $_kernel_virtual_base, %esp
 
     # Bootstrap page tables in C (called through low alias before paging is enabled).
-    mov $vmm_init_paging, %eax
+    mov $vmm_preinit, %eax
     sub $_kernel_virtual_base, %eax
     call *%eax
 

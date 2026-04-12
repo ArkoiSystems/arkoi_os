@@ -6,6 +6,8 @@
 #include "lib/kpanic.h"
 #include "lib/memory/emm.h"
 
+static pmm_region_t* g_regions;
+
 static bool size_to_order(const size_t size, uint8_t* result) {
     if (result == NULL) {
         return false;
@@ -27,12 +29,8 @@ static bool size_to_order(const size_t size, uint8_t* result) {
     return false;
 }
 
-static pmm_region_t* find_region_by_address(const pmm_t* pmm, const uintptr_t address) {
-    if (pmm == NULL) {
-        return NULL;
-    }
-
-    pmm_region_t* current = pmm->regions;
+static pmm_region_t* find_region_by_address(const uintptr_t address) {
+    pmm_region_t* current = g_regions;
     while (current) {
         if (address >= current->start && address < current->end) {
             return current;
@@ -67,12 +65,8 @@ static pmm_block_t* find_block_by_address(const pmm_region_t* region, const uint
     return &region->block_pool[block_index];
 }
 
-static pmm_region_t* find_region_for_order(const pmm_t* pmm, const uint8_t order) {
-    if (pmm == NULL) {
-        return NULL;
-    }
-
-    pmm_region_t* current = pmm->regions;
+static pmm_region_t* find_region_for_order(const uint8_t order) {
+    pmm_region_t* current = g_regions;
     while (current) {
         uint8_t current_order = order;
         while (current_order <= MAX_ORDER) {
@@ -130,15 +124,19 @@ static void add_to_region_freelist(pmm_block_t* block, pmm_region_t* region, con
     region->free_lists[order] = block;
 }
 
-void pmm_init(pmm_t* pmm) {
-    pmm->regions = NULL;
+void pmm_init(boot_info_t* boot_info) {
+    boot_memory_region_t* current_ram = boot_info->ram_regions;
+    while (current_ram != NULL) {
+        uintptr_t start = current_ram->base_address;
+        uintptr_t size = current_ram->length;
+
+        pmm_add_region(start, size);
+
+        current_ram = current_ram->next;
+    }
 }
 
-void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size) {
-    if (pmm == NULL) {
-        KPANIC("Attempted to add memory region with a NULL pointer");
-    }
-
+void pmm_add_region(uintptr_t start, uint32_t size) {
     uintptr_t original_start = start;
     uintptr_t original_end = original_start + (uintptr_t)size;
 
@@ -203,23 +201,19 @@ void pmm_add_region(pmm_t* pmm, uintptr_t start, uint32_t size) {
     }
 
     // Add the new region to the end of the linked list of regions
-    pmm_region_t** head = &pmm->regions;
+    pmm_region_t** head = &g_regions;
     while (*head) {
         head = &(*head)->next;
     }
     *head = region;
 }
 
-void* pmm_alloc_order(pmm_t* pmm, const uint8_t order) {
-    if (pmm == NULL) {
-        KPANIC("Attempted to allocate memory with a NULL pointer");
-    }
-
+void* pmm_alloc_order(const uint8_t order) {
     if (order > MAX_ORDER) {
         KPANIC("Invalid target order %d for allocation", order);
     }
 
-    pmm_region_t* region = find_region_for_order(pmm, order);
+    pmm_region_t* region = find_region_for_order(order);
     if (!region) {
         KPANIC("No free blocks available for order %d", order);
     }
@@ -264,11 +258,7 @@ void* pmm_alloc_order(pmm_t* pmm, const uint8_t order) {
     return (void*)target_block->address;
 }
 
-void* pmm_alloc_pages(pmm_t* pmm, size_t num_pages) {
-    if (pmm == NULL) {
-        KPANIC("Attempted to allocate memory with a NULL pointer");
-    }
-
+void* pmm_alloc_pages(size_t num_pages) {
     if (num_pages == 0) {
         return NULL;
     }
@@ -277,14 +267,10 @@ void* pmm_alloc_pages(pmm_t* pmm, size_t num_pages) {
         KPANIC("Requested page count %x causes size overflow", num_pages);
     }
 
-    return pmm_alloc_size(pmm, num_pages * PAGE_SIZE);
+    return pmm_alloc_size(num_pages * PAGE_SIZE);
 }
 
-void* pmm_alloc_size(pmm_t* pmm, const size_t size) {
-    if (pmm == NULL) {
-        KPANIC("Attempted to allocate memory with a NULL pointer");
-    }
-
+void* pmm_alloc_size(const size_t size) {
     if (size == 0) {
         return NULL;
     }
@@ -294,14 +280,10 @@ void* pmm_alloc_size(pmm_t* pmm, const size_t size) {
         KPANIC("Requested allocation size %x is too large to be handled by the buddy allocator", size);
     }
 
-    return pmm_alloc_order(pmm, order);
+    return pmm_alloc_order(order);
 }
 
-void pmm_free(pmm_t* pmm, void* address) {
-    if (pmm == NULL) {
-        KPANIC("Attempted to free memory with invalid argument");
-    }
-
+void pmm_free(void* address) {
     if (address == NULL) {
         return;
     }
@@ -311,7 +293,7 @@ void pmm_free(pmm_t* pmm, void* address) {
         KPANIC("Attempted to free a pointer %x that is not properly aligned", start_address);
     }
 
-    pmm_region_t* region = find_region_by_address(pmm, start_address);
+    pmm_region_t* region = find_region_by_address(start_address);
     if (!region) {
         KPANIC("Attempted to free memory at address %x which does not belong to any region", start_address);
     }

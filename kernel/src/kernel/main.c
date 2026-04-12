@@ -21,35 +21,22 @@
 #endif
 
 void kernel_main(multiboot2_info_t* mb2_info) {
+    serial_init();
     vga_init();
 
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
-    multiboot2_print_boot_info(&boot_info);
 
-    pmm_t pmm;
-    pmm_init(&pmm);
-
-    boot_memory_region_t* current_ram = boot_info.ram_regions;
-    while (current_ram != NULL) {
-        uintptr_t start = current_ram->base_address;
-        uintptr_t size = current_ram->length;
-
-        pmm_add_region(&pmm, start, size);
-
-        current_ram = current_ram->next;
-    }
-
-    pit_init();
-
-    keyboard_init();
-
-    serial_init();
+    pmm_init(&boot_info);
+    vmm_init();
 
     SERIAL_PRINT(SERIAL_PORT_COM1, "Serial port COM1 initialized successfully!\n");
 
     // Trigger a page fault for testing
-    *(uintptr_t*)(8 * 1024 * 1024) = 100;
+    *(uintptr_t*)(0x800000) = 100;
+    kprintf("Page fault test passed!\nThe value at 0x800000 is now: %d\n", *(uintptr_t*)(0x800000));
+
+    keyboard_init();
 
     while (1) {
         if (!keyboard_has_event()) {
