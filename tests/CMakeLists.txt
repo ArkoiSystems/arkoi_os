@@ -31,6 +31,7 @@ include(GoogleTest)
 
 add_executable(arkoi_tests
     src/kbuffer_tests.cpp
+    src/kmemory_tests.cpp
     "${ARKOI_KERNEL_ROOT}/src/lib/kstring.c"
     "${ARKOI_KERNEL_ROOT}/src/lib/kmemory.c"
     "${ARKOI_KERNEL_ROOT}/src/lib/kbuffer.c"

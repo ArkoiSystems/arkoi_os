@@ -138,7 +138,7 @@ TEST(KBufferTests, PopWhenEmptyLeavesDestinationUntouched) {
     cyclic_buffer_t buffer = {};
     EXPECT_TRUE(cyclic_buffer_init(&buffer, storage, 4, sizeof(int)));
 
-    EXPECT_TRUE(cyclic_buffer_pop(&buffer, &out));
+    EXPECT_FALSE(cyclic_buffer_pop(&buffer, &out));
 
     EXPECT_EQ(out, 12345);
     EXPECT_TRUE(cyclic_buffer_is_empty(&buffer));

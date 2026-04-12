@@ -29,8 +29,9 @@ void* kmemcpy(void* destination, const void* source, uint32_t size);
  * @param destination The pointer to the block of memory to fill.
  * @param value       The value to set.
  * @param size        The number of bytes to fill.
+ * @return void* A pointer to the destination, which is the same as the `destination` parameter.
  */
-void kmemset(void* destination, uint8_t value, uint32_t size);
+void* kmemset(void* destination, uint8_t value, uint32_t size);
 
 /**
  * @brief Aligns the given value up to the nearest multiple of the specified alignment.
