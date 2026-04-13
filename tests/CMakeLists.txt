@@ -31,10 +31,14 @@ include(GoogleTest)
 
 add_executable(arkoi_tests
     src/kbuffer_tests.cpp
+    src/kcursor_tests.cpp
     src/kmemory_tests.cpp
+    src/kstdio_tests.cpp
+    "${ARKOI_KERNEL_ROOT}/src/lib/kcursor.c"
     "${ARKOI_KERNEL_ROOT}/src/lib/kstring.c"
     "${ARKOI_KERNEL_ROOT}/src/lib/kmemory.c"
     "${ARKOI_KERNEL_ROOT}/src/lib/kbuffer.c"
+    "${ARKOI_KERNEL_ROOT}/src/lib/kstdio.c"
 )
 
 target_include_directories(arkoi_tests

@@ -50,6 +50,7 @@ set(DRIVER_SOURCES
 )
 
 set(LIB_SOURCES
+    src/lib/kcursor.c
     src/lib/kstdio.c
     src/lib/kpanic.c
     src/lib/kstring.c

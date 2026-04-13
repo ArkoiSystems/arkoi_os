@@ -17,7 +17,7 @@
  * @param args   A va_list of arguments to be formatted according to the format string.
  * @return uint32_t The number of characters written to the buffer, excluding the null terminator.
  */
-uint32_t vsnprintf(char* buffer, uint32_t size, const char* format, va_list args);
+uint32_t kvsnprintf(char* buffer, uint32_t size, const char* format, va_list args);
 
 /**
  * @brief Print formatted output to a string buffer, similar to snprintf in C.
@@ -32,7 +32,7 @@ uint32_t vsnprintf(char* buffer, uint32_t size, const char* format, va_list args
  * @param ...    Additional arguments to be formatted according to the format string.
  * @return uint32_t The number of characters written to the buffer, excluding the null terminator.
  */
-uint32_t snprintf(char* buffer, uint32_t size, const char* format, ...);
+uint32_t ksnprintf(char* buffer, uint32_t size, const char* format, ...);
 
 /**
  * @brief Print formatted output to the console using a va_list of arguments.
