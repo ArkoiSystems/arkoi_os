@@ -120,46 +120,45 @@ void multiboot2_print_boot_info(const boot_info_t* boot_info) {
     kprintf("Booted using the \"%s\" boot loader\n", boot_info->name);
     kprintf("The command line is \"%s\"\n", boot_info->command_line);
 
-    uint64_t ram_size_mb = multiboot2_memory_map_size(boot_info->ram_regions) / (1024 * 1024);
+    uint32_t ram_size_mb = multiboot2_memory_map_size(boot_info->ram_regions) / (1024 * 1024);
     uint32_t ram_count = multiboot2_memory_map_count(boot_info->ram_regions);
-    kprintf("RAM has a size of %d MB with %d regions\n", (uint32_t)ram_size_mb, ram_count);
+    kprintf("RAM has a size of %u MB with %u regions\n", ram_size_mb, ram_count);
 
     boot_memory_region_t* current_ram = boot_info->ram_regions;
     while (current_ram != NULL) {
-        uint64_t start_address = current_ram->base_address;
-        uint64_t end_address = current_ram->base_address + current_ram->length;
-        uint64_t size = current_ram->length / 1024;
+        uintptr_t start_address = current_ram->base_address;
+        uintptr_t end_address = current_ram->base_address + current_ram->length;
+        size_t size = current_ram->length / 1024;
 
-        kprintf(" - RAM Region: %x - %x (%d KB)\n", (uint32_t)start_address, (uint32_t)end_address, (uint32_t)size);
+        kprintf(" - RAM Region: %p - %p (%u KB)\n", start_address, end_address, size);
 
         current_ram = current_ram->next;
     }
 
-    uint64_t reserved_size_mb = multiboot2_memory_map_size(boot_info->reserved_regions) / 1024;
+    uint32_t reserved_size_mb = multiboot2_memory_map_size(boot_info->reserved_regions) / 1024;
     uint32_t reserved_count = multiboot2_memory_map_count(boot_info->reserved_regions);
-    kprintf("There are %d KB of reserved memory in %d regions\n", (uint32_t)reserved_size_mb, reserved_count);
+    kprintf("There are %u KB of reserved memory in %u regions\n", reserved_size_mb, reserved_count);
 
     boot_memory_region_t* current_reserved = boot_info->reserved_regions;
     while (current_reserved != NULL) {
-        uint64_t start_address = current_reserved->base_address;
-        uint64_t end_address = current_reserved->base_address + current_reserved->length;
-        uint64_t size = current_reserved->length / 1024;
+        uintptr_t start_address = current_reserved->base_address;
+        uintptr_t end_address = current_reserved->base_address + current_reserved->length;
+        size_t size = current_reserved->length / 1024;
 
-        kprintf(
-            " - Reserved Region: %x - %x (%d KB)\n", (uint32_t)start_address, (uint32_t)end_address, (uint32_t)size);
+        kprintf(" - Reserved Region: %p - %p (%u KB)\n", start_address, end_address, size);
 
         current_reserved = current_reserved->next;
     }
 
-    kprintf("There are %d modules loaded\n", multiboot2_module_count(boot_info->modules));
+    kprintf("There are %u modules loaded\n", multiboot2_module_count(boot_info->modules));
 
     boot_module_t* current_module = boot_info->modules;
     while (current_module != NULL) {
-        uint32_t start_address = current_module->mod_start;
-        uint32_t end_address = current_module->mod_end;
-        uint32_t size = current_module->mod_end - current_module->mod_start;
+        uintptr_t start_address = current_module->mod_start;
+        uintptr_t end_address = current_module->mod_end;
+        uintptr_t size = current_module->mod_end - current_module->mod_start;
 
-        kprintf(" - Module: %x - %x (%d KB)\n", start_address, end_address, size / 1024);
+        kprintf(" - Module: %p - %p (%u KB)\n", start_address, end_address, size / 1024);
         kprintf("   Command line: %s\n", current_module->command_line);
 
         current_module = current_module->next;

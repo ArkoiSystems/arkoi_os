@@ -20,8 +20,8 @@ TEST(KStdioTests, SnprintfFormatsSupportedSpecifiers) {
 
     const uint32_t written = ksnprintf(buffer, sizeof(buffer), "d=%d x=%x s=%s c=%c p=%%", -42, 0x1A2BU, "ok", 'Z');
 
-    EXPECT_EQ(written, 31U);
-    EXPECT_STREQ(buffer, "d=-42 x=0x00001A2B s=ok c=Z p=%");
+    EXPECT_EQ(written, 26U);
+    EXPECT_STREQ(buffer, "d=-42 x=1a2b s=ok c=Z p=%");
 }
 
 TEST(KStdioTests, SnprintfUnknownSpecifierIsLiteralized) {
@@ -29,7 +29,7 @@ TEST(KStdioTests, SnprintfUnknownSpecifierIsLiteralized) {
 
     const uint32_t written = ksnprintf(buffer, sizeof(buffer), "A%qB");
 
-    EXPECT_EQ(written, 4U);
+    EXPECT_EQ(written, 5U);
     EXPECT_STREQ(buffer, "A%qB");
 }
 
@@ -38,7 +38,7 @@ TEST(KStdioTests, SnprintfNullStringUsesPlaceholder) {
 
     const uint32_t written = ksnprintf(buffer, sizeof(buffer), "msg=%s", (char*)NULL);
 
-    EXPECT_EQ(written, 8U);
+    EXPECT_EQ(written, 9U);
     EXPECT_STREQ(buffer, "msg=NULL");
 }
 
@@ -47,6 +47,33 @@ TEST(KStdioTests, SnprintfStopsBeforeOverflow) {
 
     const uint32_t written = ksnprintf(buffer, sizeof(buffer), "abc");
 
-    EXPECT_EQ(written, 2U);
+    EXPECT_EQ(written, 3U);
     EXPECT_STREQ(buffer, "ab");
+}
+
+TEST(KStdioTests, SnprintfSupportsUnsignedAndSignedAlias) {
+    char buffer[128] = {};
+
+    const uint32_t written = ksnprintf(buffer, sizeof(buffer), "u=%u i=%i", 4294967295U, -17);
+
+    EXPECT_EQ(written, 19U);
+    EXPECT_STREQ(buffer, "u=4294967295 i=-17");
+}
+
+TEST(KStdioTests, SnprintfSupportsUpperHexAndPointer) {
+    char buffer[128] = {};
+
+    const uint32_t written = ksnprintf(buffer, sizeof(buffer), "X=%#X P=%p", 0xABCDU, nullptr);
+
+    EXPECT_EQ(written, 22U);
+    EXPECT_STREQ(buffer, "X=0XABCD P=0x00000000");
+}
+
+TEST(KStdioTests, SnprintfHandlesInt32Min) {
+    char buffer[32] = {};
+
+    const uint32_t written = ksnprintf(buffer, sizeof(buffer), "%d", INT32_MIN);
+
+    EXPECT_EQ(written, 12U);
+    EXPECT_STREQ(buffer, "-2147483648");
 }

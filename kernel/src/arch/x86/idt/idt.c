@@ -73,7 +73,7 @@ void isr_uninstall(const uint8_t isr) {
 
 void isr_handler(const isr_frame_t* frame) {
     if (frame->int_no >= 32) {
-        KPANIC("Invalid ISR with interrupt number %d", frame->int_no);
+        KPANIC("Invalid ISR with interrupt number %u", frame->int_no);
     }
 
     isr_t handler = g_isr_handlers[frame->int_no];
@@ -83,7 +83,7 @@ void isr_handler(const isr_frame_t* frame) {
         isr_exception_t exception = frame->int_no;
         const char* message = EXCEPTION_MESSAGES[exception];
 
-        KPANIC("Unhandled exception: %d (%s)\n", exception, message);
+        KPANIC("Unhandled exception: %u (%s)\n", exception, message);
     }
 }
 

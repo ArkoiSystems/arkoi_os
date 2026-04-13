@@ -141,7 +141,7 @@ void pmm_add_region(uintptr_t start, uint32_t size) {
     uintptr_t original_end = original_start + (uintptr_t)size;
 
     if (original_start >= original_end) {
-        KPANIC("Memory region overflows address space (start=%x, size=%x)", original_start, size);
+        KPANIC("Memory region overflows address space (start=%p, size=%u)", original_start, size);
     }
 
     uintptr_t aligned_start = kalign_up(original_start, PAGE_SIZE);
@@ -210,12 +210,12 @@ void pmm_add_region(uintptr_t start, uint32_t size) {
 
 void* pmm_alloc_order(const uint8_t order) {
     if (order > MAX_ORDER) {
-        KPANIC("Invalid target order %d for allocation", order);
+        KPANIC("Invalid target order %u for allocation", order);
     }
 
     pmm_region_t* region = find_region_for_order(order);
     if (!region) {
-        KPANIC("No free blocks available for order %d", order);
+        KPANIC("No free blocks available for order %u", order);
     }
 
     uint8_t current_order = order;
@@ -228,7 +228,7 @@ void* pmm_alloc_order(const uint8_t order) {
     }
 
     if (current_order > MAX_ORDER) {
-        KPANIC("No blocks available for order %d or higher", order);
+        KPANIC("No blocks available for order %u or higher", order);
     }
 
     pmm_block_t* target_block = region->free_lists[current_order];
@@ -264,7 +264,7 @@ void* pmm_alloc_pages(size_t num_pages) {
     }
 
     if (num_pages > (SIZE_MAX / PAGE_SIZE)) {
-        KPANIC("Requested page count %x causes size overflow", num_pages);
+        KPANIC("Requested page count %u causes size overflow", num_pages);
     }
 
     return pmm_alloc_size(num_pages * PAGE_SIZE);
@@ -277,7 +277,7 @@ void* pmm_alloc_size(const size_t size) {
 
     uint8_t order;
     if (!size_to_order(size, &order)) {
-        KPANIC("Requested allocation size %x is too large to be handled by the buddy allocator", size);
+        KPANIC("Requested allocation size %u is too large to be handled by the buddy allocator", size);
     }
 
     return pmm_alloc_order(order);
@@ -290,29 +290,29 @@ void pmm_free(void* address) {
 
     uintptr_t start_address = (uintptr_t)address;
     if ((start_address & (PAGE_SIZE - 1U)) != 0U) {
-        KPANIC("Attempted to free a pointer %x that is not properly aligned", start_address);
+        KPANIC("Attempted to free a pointer %p that is not properly aligned", start_address);
     }
 
     pmm_region_t* region = find_region_by_address(start_address);
     if (!region) {
-        KPANIC("Attempted to free memory at address %x which does not belong to any region", start_address);
+        KPANIC("Attempted to free memory at address %p which does not belong to any region", start_address);
     }
 
     pmm_block_t* block = find_block_by_address(region, start_address);
     if (!block) {
-        KPANIC("Attempted to free memory at address %x which does not belong to any block", start_address);
+        KPANIC("Attempted to free memory at address %p which does not belong to any block", start_address);
     }
 
     if (block->is_free) {
-        KPANIC("Double free detected for pointer %x", start_address);
+        KPANIC("Double free detected for pointer %p", start_address);
     }
 
     if (block->order > MAX_ORDER) {
-        KPANIC("Attempted to free pointer %x with invalid block order %d", start_address, block->order);
+        KPANIC("Attempted to free pointer %p with invalid block order %u", start_address, block->order);
     }
 
     if ((start_address - region->start) % BLOCK_SIZE(block->order) != 0) {
-        KPANIC("Attempted to free non-block-aligned pointer %x", start_address);
+        KPANIC("Attempted to free non-block-aligned pointer %p", start_address);
     }
 
     block->is_free = true;

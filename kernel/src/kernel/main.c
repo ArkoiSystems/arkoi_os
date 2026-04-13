@@ -26,6 +26,7 @@ void kernel_main(multiboot2_info_t* mb2_info) {
 
     boot_info_t boot_info;
     multiboot2_parse_boot_info(mb2_info, &boot_info);
+    multiboot2_print_boot_info(&boot_info);
 
     pmm_init(&boot_info);
     vmm_init();
@@ -33,8 +34,9 @@ void kernel_main(multiboot2_info_t* mb2_info) {
     SERIAL_PRINT(SERIAL_PORT_COM1, "Serial port COM1 initialized successfully!\n");
 
     // Trigger a page fault for testing
-    *(uintptr_t*)(0x800000) = 100;
-    kprintf("Page fault test passed!\nThe value at 0x800000 is now: %d\n", *(uintptr_t*)(0x800000));
+    uintptr_t test_address = 0x800000;
+    *(uintptr_t*)(test_address) = 100;
+    kprintf("Page fault test passed!\nThe value at %p is now: %u\n", test_address, *(uintptr_t*)(test_address));
 
     keyboard_init();
 

@@ -2,26 +2,22 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "drivers/vga.h"
 #include "lib/kcursor.h"
 #include "lib/kstring.h"
 
-static const char* HEX_DIGITS = "0123456789ABCDEF";
+static const char* HEX_DIGITS_UPPER = "0123456789ABCDEF";
+static const char* HEX_DIGITS_LOWER = "0123456789abcdef";
 
-static bool write_dec(kcursor_t* cursor, int32_t value) {
+static bool write_u32_dec(kcursor_t* cursor, uint32_t value) {
     if (cursor == NULL) {
         return false;
     }
 
-    if (value < 0) {
-        if (!kcursor_write_byte(cursor, '-')) return false;
-
-        value = -value;
-    }
-
-    int32_t temp = value;
-    int32_t divisor = 1;
+    uint32_t temp = value;
+    uint32_t divisor = 1;
     while (temp >= 10) {
         divisor *= 10;
         temp /= 10;
@@ -40,20 +36,58 @@ static bool write_dec(kcursor_t* cursor, int32_t value) {
     return true;
 }
 
-static bool write_hex(kcursor_t* cursor, const uint32_t value) {
+static bool write_i32_dec(kcursor_t* cursor, int32_t value) {
+    if (cursor == NULL) {
+        return false;
+    }
+
+    if (value < 0) {
+        if (!kcursor_write_byte(cursor, '-')) {
+            return false;
+        }
+
+        // Convert through unsigned arithmetic so INT_MIN is handled safely.
+        return write_u32_dec(cursor, 0U - (uint32_t)value);
+    }
+
+    return write_u32_dec(cursor, (uint32_t)value);
+}
+
+static bool write_hex_nibbles(
+    kcursor_t* cursor, const uint32_t value, const uint8_t nibbles, const bool uppercase, const bool alternate_form) {
     if (cursor == NULL) return false;
 
-    if (!kcursor_write_byte(cursor, '0')) return false;
-    if (!kcursor_write_byte(cursor, 'x')) return false;
+    if (alternate_form) {
+        if (!kcursor_write_byte(cursor, '0')) return false;
+        if (!kcursor_write_byte(cursor, uppercase ? 'X' : 'x')) return false;
+    }
 
-    for (int shift = 28; shift >= 0; shift -= 4) {
+    const char* hex_digits = uppercase ? HEX_DIGITS_UPPER : HEX_DIGITS_LOWER;
+    for (int shift = (nibbles - 1) * 4; shift >= 0; shift -= 4) {
         const uint8_t digit = (value >> shift) & 0xF;
-        if (!kcursor_write_byte(cursor, HEX_DIGITS[digit])) {
+        if (!kcursor_write_byte(cursor, hex_digits[digit])) {
             return false;
         }
     }
 
     return true;
+}
+
+static size_t hex_digit_count(uint32_t value) {
+    size_t count = 0;
+    do {
+        count++;
+        value >>= 4;
+    } while (value != 0);
+    return count;
+}
+
+static bool write_u32_hex(kcursor_t* cursor, const uint32_t value, const bool uppercase, const bool alternate_form) {
+    return write_hex_nibbles(cursor, value, hex_digit_count(value), uppercase, alternate_form);
+}
+
+static bool write_pointer(kcursor_t* cursor, const uintptr_t value) {
+    return write_hex_nibbles(cursor, value, 8, false, true);
 }
 
 uint32_t kvsnprintf(char* buffer, const uint32_t size, const char* format, va_list args) {
@@ -83,13 +117,28 @@ uint32_t kvsnprintf(char* buffer, const uint32_t size, const char* format, va_li
         current = format[++index];
         if (current == '\0') break;
 
+        // Behavior modifiers
+        bool alternate_form = false;
+
+        if (current == '#') {
+            alternate_form = true;
+            current = format[++index];
+            if (current == '\0') break;
+        }
+
         // Process the specifier character
-        if (current == 'd') {
+        if (current == 'd' || current == 'i') {
             const int32_t value = va_arg(args, int);
-            if (!write_dec(&cursor, value)) break;
-        } else if (current == 'x') {
+            if (!write_i32_dec(&cursor, value)) break;
+        } else if (current == 'u') {
             const uint32_t value = va_arg(args, uint32_t);
-            if (!write_hex(&cursor, value)) break;
+            if (!write_u32_dec(&cursor, value)) break;
+        } else if (current == 'x' || current == 'X') {
+            const uint32_t value = va_arg(args, uint32_t);
+            if (!write_u32_hex(&cursor, value, current == 'X', alternate_form)) break;
+        } else if (current == 'p') {
+            const uintptr_t value = va_arg(args, uintptr_t);
+            if (!write_pointer(&cursor, value)) break;
         } else if (current == 's') {
             const char* value = va_arg(args, char*);
             if (value == NULL) value = "NULL";
@@ -111,7 +160,8 @@ uint32_t kvsnprintf(char* buffer, const uint32_t size, const char* format, va_li
     const uint32_t written = kcursor_written(&cursor);
     buffer[written] = '\0';
 
-    return written;
+    // Account for the null terminator in the return value to match the behavior of standard snprintf.
+    return written + 1;
 }
 
 uint32_t ksnprintf(char* buffer, const uint32_t size, const char* format, ...) {

@@ -14,7 +14,7 @@ void* emm_alloc(size_t size) {
     uintptr_t next_cursor = current_cursor + size;
 
     if (next_cursor > g_end) {
-        KPANIC("Early boot allocator exhausted while allocating %d bytes", size);
+        KPANIC("Early boot allocator exhausted while allocating %u bytes", size);
     }
 
     g_cursor = next_cursor;
